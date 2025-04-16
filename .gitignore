@@ -1,0 +1,97 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environment
+venv/
+ENV/
+env/
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# LaTeX temporary files
+*.aux
+*.lof
+*.log
+*.lot
+*.fls
+*.out
+*.toc
+*.fmt
+*.fot
+*.cb
+*.cb2
+.*.lb
+*.dvi
+*.xdv
+*-converted-to.*
+*.pdf
+*.ps
+*.eps
+*.tex.bak
+*.bbl
+*.bcf
+*.blg
+*.run.xml
+*.fdb_latexmk
+*.synctex
+*.synctex(busy)
+*.synctex.gz
+*.synctex.gz(busy)
+*.pdfsync
+
+# Exclude specific PDFs that should be included
+!report/build/main.pdf
+!clinical_project_notes.pdf
+!report/2408.11142v1.pdf
+
+# MRML files (may contain patient data)
+*.mrml
+
+# Data files that might contain sensitive information
+/data/
+/report/data/*
+!report/data/.gitkeep
+
+# Logs
+logs/
+*.log
+
+# Environment configuration
+.env
+*.env
+config.ini
+secrets.json
+credentials.json
+
+# Images that might contain sensitive information
+# Add specific image files/directories if necessary
+# Exclude specific images that should be included
+!development/Figure_1.png
+!slicer/2025-04-10-Scene.png 

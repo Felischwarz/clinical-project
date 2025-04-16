@@ -1,0 +1,114 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{enumitem}
+
+\title{Clinical Project Notes}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section*{Clinical Project Notes}
+
+\begin{itemize}
+    \item \textbf{"Time is Brain"}: In the case of a stroke, time is a crucial factor that significantly influences how much brain tissue is irreversibly damaged and how much can still be saved.
+
+    \item In the treatment of ischemic stroke patients, it's crucial to identify which parts are irreversibly destroyed (core) and which parts can still be rescued (penumbra). The penumbra surrounds the core.
+
+    \item As time passes, the core becomes larger ("Time is Brain").
+
+    \item \textbf{Perfusion CT}: Measures blood flow in the brain over time (every 1–2 seconds over 45–60 seconds), using a contrast agent.
+
+    \item Different software packages use different deconvolution algorithms and thresholds, which can lead to varying estimations of core and penumbra volumes.
+
+    \item \textbf{Lesion masks}: 
+    \begin{itemize}
+        \item Represent binary infarct masks in the dataset, derived from MRI images.
+        \item Show actual final infarct areas and are co-registered to the NCCT (Non-Contrast CT).
+        \item Serve as ground truth (i.e., the “truth” your model is supposed to predict).
+    \end{itemize}
+
+    \item \textbf{Goal}: Predict MRI-based lesion masks from CT data, bridging the gap between the CT image and the later MRI image (Paper 2 does exactly that).
+
+    \item \textbf{Goal of the paper “A Robust Ensemble Algorithm for Ischemic Stroke Lesion Segmentation: Generalizability and Clinical Utility Beyond the ISLES Challenge”}:
+    Automatically segment lesions from MRI (DWI, ADC, FLAIR), not CT prediction.
+
+    \item \textbf{CT and MRI-based analysis}:
+    \begin{itemize}
+        \item \textbf{CT (Acute phase)}:
+        \begin{itemize}
+            \item Performed first, faster execution (minutes vs. MRI 30–45 minutes), \textit{time is brain}.
+            \item CT scanners are mobile, available in every hospital and at any time.
+            \item No need for patient to lie still.
+            \item Cheaper.
+            \item MRI can be affected by metal implants, pacemakers; patients might be unconscious and quick action is necessary.
+            \item Shows mainly structural/anatomical changes.
+            \item Useful for quick differentiation between ischemic and hemorrhagic stroke.
+        \end{itemize}
+        \item \textbf{MRI (Follow-up)}:
+        \begin{itemize}
+            \item Offers better soft tissue contrast.
+            \item More accurate display of final infarct volume.
+        \end{itemize}
+    \end{itemize}
+
+    \item \textbf{Paper: A Robust Ensemble Algorithm for Ischemic Stroke Lesion Segmentation}:
+    \begin{itemize}
+        \item DWI is the only imaging technique reliably demonstrating parenchymal injury within minutes to hours from stroke onset.
+        \item Frameworks like \texttt{nnU-Net} used by participants.
+        \item \texttt{nnU-Net}: Enables largely automated and optimized segmentation of medical images by automatically finding and applying the best configuration for a dataset.
+        \item Uses Dice loss function: Effective for optimizing overlap accuracy between model segmentations and actual labels.
+        \item Important question: Can deep learning identify ischemic lesions in scans from an unseen imaging center (another hospital)?
+        \item Even similar CNNs can perform variably due to factors like hyperparameter tuning, stochastic optimization, and data splitting.
+        \item Ensemble model achieved high accuracy even in clinical applications with varying conditions (different clinics, lesion sizes, stroke phases, image patterns, brain regions).
+        \item Limitation: Lack of multi-center representation.
+    \end{itemize}
+
+    \item \textbf{Paper: ISLES 2024 – The first longitudinal multimodal multi-center real-world dataset in (sub-)acute stroke}:
+    \begin{itemize}
+        \item First dataset with both follow-up MRI (2–9 days after stroke) and acute CT images (non-contrast, angiography, and perfusion), as well as clinical data up to three months.
+        \item Goal: Predict MRI-based lesion masks from CT data, bridging the gap.
+    \end{itemize}
+
+    \item \textbf{Additional clinical data}:
+    \begin{itemize}
+        \item Age, sex, pre-existing conditions, lab values, treatment times (e.g., onset-to-door), NIHSS and mRS scores (at admission, 24h, discharge, 3 months).
+    \end{itemize}
+
+    \item \textbf{Dataset structure}:
+    \begin{itemize}
+        \item \texttt{sesX} = session X
+        \item \texttt{raw\_data}: contains unprocessed image data.
+        \item \texttt{derivatives}: processed/derived data.
+        \item \texttt{phenotype}: contains clinical/demographic CSV files.
+    \end{itemize}
+
+    \item \textbf{Perfusion maps} (e.g., CBF, CBV, MTT, TTP):
+    \begin{itemize}
+        \item Derived volumetric data visualizing blood perfusion parameters, not raw CT.
+        \item \textbf{CBF (Cerebral Blood Flow)}: Blood flow per time through a brain volume (ml/100g tissue/min).
+        \item \textbf{CBV (Cerebral Blood Volume)}: Total blood volume in a brain region (ml/100g tissue).
+        \item \textbf{MTT (Mean Transit Time)}: Average time for blood to pass through a region.
+        \item \textbf{TTP (Time to Peak)}: Time to maximum contrast agent concentration in an area.
+        \item These parameters help differentiate between irreversibly damaged (core) and salvageable (penumbra) tissue.
+        \item In ISLES24 dataset, usually found in a separate folder, e.g., \texttt{perfusion maps}.
+    \end{itemize}
+
+    \item \textbf{Sessions}:
+    \begin{itemize}
+        \item \texttt{ses-01}: Initial, acute scans:
+        \begin{itemize}
+            \item NCCT (Non-Contrast CT)
+            \item CTA (CT Angiography)
+            \item CT Perfusion (source for perfusion maps)
+        \end{itemize}
+        \item \texttt{ses-02}: Contains lesion mask (from later MRI)
+    \end{itemize}
+
+\end{itemize}
+
+\end{document}

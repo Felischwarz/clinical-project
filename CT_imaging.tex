@@ -1,0 +1,55 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{enumitem}
+\usepackage{amsmath}
+\usepackage{graphicx}
+
+\title{CT Imaging}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section*{Hounsfield Units (HU)}
+\begin{itemize}[leftmargin=1.5em]
+    \item are used to segment CT data by dividing the image into regions with similar X-ray density.
+    \item Each voxel in a CT scan is assigned a value based on its X-ray attenuation, measured in HU.
+\end{itemize}
+
+\section*{Thresholding ( = Threshold Segmentation)}
+\begin{itemize}[leftmargin=1.5em]
+    \item Discretization of HU values to classify different tissue types based on intensity.
+\end{itemize}
+
+\section*{Window / Level Settings}
+\begin{itemize}[leftmargin=1.5em]
+    \item \textbf{Window:} Defines the range of Hounsfield Unit values mapped to the grayscale, enhancing contrast for specific tissues.
+    \item \textbf{Level (aka Window Center):} Determines the midpoint of the window range, setting the overall brightness of the image.
+    \item In \textbf{3D Slicer}:
+    \begin{itemize}
+        \item Click the colorful icon in the toolbar.
+        \item Mouse movement:
+        \begin{itemize}
+            \item Up/Down: Adjust window (contrast)
+            \item Left/Right: Adjust level (brightness)
+        \end{itemize}
+    \end{itemize}
+\end{itemize}
+
+\section*{Registration}
+\begin{itemize}[leftmargin=1.5em]
+    \item has already been performed on the dataset derivatives.
+    \item aligns multiple images spatially to enable correct comparison or fusion.
+\end{itemize}
+
+\section*{Image Overlay in 3D Slicer}
+\begin{itemize}[leftmargin=1.5em]
+    \item Open the View Controllers panel
+    \item Expand a channel
+    \item Click double-ring icon
+    \item Select the images to overlay
+\end{itemize}
+
+\end{document}

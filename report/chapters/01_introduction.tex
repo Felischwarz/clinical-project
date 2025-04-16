@@ -1,0 +1,28 @@
+% !TeX root = ../main.tex
+% Add the above to each chapter to make compiling the PDF easier in some editors.
+
+\chapter{Introduction}\label{chapter:introduction}
+
+Stroke is one of the leading causes of death and disability worldwide, with ischemic stroke accounting for approximately 87\% of all cases. In the context of stroke treatment, the phrase "Time is Brain" encapsulates a fundamental principle: time is a crucial factor that significantly influences the extent of irreversible brain damage and the potential for recovery. Each minute delay in treatment results in the loss of approximately 1.9 million neurons, emphasizing the critical nature of rapid intervention.
+
+The challenge in treating ischemic stroke lies in accurately differentiating between irreversibly damaged tissue (the infarct core) and potentially salvageable tissue (the penumbra). As time progresses, the core expands at the expense of the penumbra, highlighting the urgency of accurate diagnostic imaging and prompt treatment decisions.
+
+Currently, computed tomography (CT) is the primary imaging modality used in the acute phase of stroke due to its widespread availability, speed of acquisition, and ability to differentiate between ischemic and hemorrhagic stroke. Perfusion CT, which measures blood flow in the brain over time using contrast agents, plays a crucial role in identifying the core and penumbra regions. However, magnetic resonance imaging (MRI) provides superior soft tissue contrast and more accurate visualization of the final infarct volume, making it the preferred method for follow-up assessment.
+
+This clinical gap—between the initial CT imaging used for urgent decision-making and the subsequent MRI that better represents the actual tissue outcome—presents both a challenge and an opportunity for computational approaches. The ISLES 2024 dataset, the first longitudinal multimodal multi-center real-world dataset in (sub-)acute stroke, offers a unique resource to address this gap by providing paired acute CT and follow-up MRI data from the same patients.
+
+\section{Project Objectives}
+
+The primary goal of this clinical project is to predict MRI-based lesion masks from CT data, effectively bridging the temporal and informational gap between acute CT imaging and follow-up MRI. Specifically, this project aims to:
+
+\begin{itemize}
+    \item Analyze and preprocess imaging data from the ISLES 2024 dataset, including CT perfusion maps (CBF, CBV, MTT, TTP) and associated clinical information.
+    
+    \item Develop and evaluate computational models that can predict final infarct volumes (as represented in MRI-derived lesion masks) based on sub-acute CT data.
+    
+    \item Assess the generalizability of the developed models across different clinical centers and varying patient characteristics.
+    
+    \item Explore the potential clinical utility of such predictive models in acute stroke management decision-making.
+\end{itemize}
+
+The project builds upon recent advances in deep learning approaches to medical image segmentation, particularly in the context of stroke imaging, while addressing the specific challenges posed by cross-modality prediction and variability in imaging parameters across clinical centers.
