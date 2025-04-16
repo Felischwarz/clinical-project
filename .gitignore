@@ -67,7 +67,7 @@ env/
 *.pdfsync
 
 # Exclude specific PDFs that should be included
-!report/build/main.pdf
+!report/main.pdf
 !clinical_project_notes.pdf
 !report/2408.11142v1.pdf
 
