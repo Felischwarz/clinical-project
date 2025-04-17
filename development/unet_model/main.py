@@ -44,14 +44,15 @@ from monai.transforms import (
 
     CropForegroundd,
     RandSpatialCropd,
+    DivisiblePadd,
 )
 
 from monai.data import DataLoader, Dataset, pad_list_data_collate
-from monai.losses import DiceLoss
+from torch.nn import BCEWithLogitsLoss
 from monai.metrics import DiceMetric
 
 # For testing purposes, limit the number of subjects
-MAX_SUBJECTS = 3  # Set to None to use all subjects
+MAX_SUBJECTS = None  # Set to None to use all subjects
 
 print(f"Starting data loading at {time.strftime('%H:%M:%S')}")
 
@@ -94,16 +95,18 @@ train_transforms = Compose([
     EnsureChannelFirstd(keys=["image", "label"]),
     ScaleIntensityd(keys=["image", "label"]),
     # Add spatial padding to enforce consistent dimensions
-    SpatialPadd(keys=["image", "label"], spatial_size=[256, 256, 80]),
+    SpatialPadd(keys=["image", "label"], spatial_size=[256, 256, 64]),
     RandRotated(keys=["image", "label"], range_x=15, range_y=15, range_z=15, prob=0.3),
     RandFlipd(keys=["image", "label"], spatial_axis=0, prob=0.5),
     ToTensord(keys=["image", "label"]),
     # make sure the spacing and orientation are the same for the image and label
-    Spacingd(keys=["image", "label"], pixdim=[1.0, 1.0, 1.0]),
-    Orientationd(keys=["image", "label"], axcodes="RAS"),
+    Spacingd(keys=["image", "label"], pixdim=[1.0, 1.0, 1.0]), #use the same spacing for every voxel
 
     CropForegroundd(keys=["image", "label"], source_key="image"),
-    RandSpatialCropd(keys=["image", "label"], roi_size=[600, 600, 80], random_size=False),
+    RandSpatialCropd(keys=["image", "label"], roi_size=[256, 256, 64], random_size=False),
+
+    DivisiblePadd(keys=["image", "label"], k=16), #voxel shape (in Anzahl Voxel) must be divisible by k
+    Orientationd(keys=["image", "label"], axcodes="RAS"), #use the same orientation for every voxel
 ])
 
 
@@ -135,8 +138,8 @@ print(f"Using device: {device}")
 unet.to(device)
 
 #initialize loss function and metric
-loss_function = DiceLoss(include_background=True, to_onehot_y=True, softmax=True)
-metric = DiceMetric(include_background=True, reduction="mean", get_not_nans=False)
+loss_function = BCEWithLogitsLoss()
+metric = DiceMetric(include_background=True, reduction="mean")
 
 #initialize optimizer
 optimizer = torch.optim.Adam(unet.parameters(), lr=1e-4)
@@ -177,13 +180,18 @@ for epoch in range(num_epochs):
         optimizer.step()    
 
         epoch_loss += loss.item()
-        metric.update(outputs, labels)
+        pred = torch.sigmoid(outputs) > 0.5
+        pred = pred.float()
+        metric(pred, labels)  # Use __call__ method instead of update
         
         batch_count += 1
         print(f"  Batch {batch_count} completed in {time.time() - batch_start:.2f}s")
     
     epoch_loss /= len(train_loader)
-    epoch_dice = metric.compute()       
+    # Get metric result (mean Dice score)
+    epoch_dice = metric.aggregate().item()
+    # Reset metric for next epoch
+    metric.reset()
     
     print(f"Epoch {epoch+1}/{num_epochs}, Loss: {epoch_loss:.4f}, Dice: {epoch_dice:.4f}, Time: {time.time() - epoch_start:.2f}s")
 
