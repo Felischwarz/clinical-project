@@ -31,8 +31,8 @@ For example:
 
 \begin{itemize}
     \item Voxel spacing is unified using the transformation \texttt{Spacingd(keys=["image", "label"], pixdim=[1.0, 1.0, 1.0])}, ensuring that all voxels have the same spacing along each axis (the physical distance between the centers of adjacent voxels)
-    \item The voxel shape must be divisible by a factor $k$. This is enforced by:\\
-        \texttt{DivisiblePadd(keys=["image", "label"], k=16)}
+    \item The voxel shape must be divisible by a factor $k$, which is enforced by \texttt{DivisiblePadd(keys=["image", "label"], k=16)}
+  
 \end{itemize}
 
 We begin by implementing a minimal viable model that uses the Binary Cross-Entropy (BCE) loss function and the Dice metric. The model is trained on a single batch for five epochs, taking approximately 10 minutes. The results after training are:
@@ -47,17 +47,17 @@ We begin by implementing a minimal viable model that uses the Binary Cross-Entro
     \begin{subfigure}{\textwidth}
         \centering
         \includegraphics[width=\textwidth]{figures/Figure_2.png}
-        \caption{First example of a CT scan slice with corresponding prediction and ground truth mask. The prediction shows no correspondence with the actual lesion.}
-        \label{fig:predicted_mask_1}
+        \caption{Axiale Ansicht eines CT-Scans mit zugehöriger Vorhersage und Ground Truth Maske. Die Vorhersage zeigt keine Übereinstimmung mit der tatsächlichen Läsion.}
+        \label{fig:predicted_mask_axial}
     \end{subfigure}
     \vspace{1em}
     \begin{subfigure}{\textwidth}
         \centering
         \includegraphics[width=\textwidth]{figures/Figure_3.png}
-        \caption{Second example showing a different CT scan slice. Here too, the model fails to detect the lesion, predicting only background.}
-        \label{fig:predicted_mask_2}
+        \caption{Koronale Ansicht desselben CT-Scans. Auch hier ist deutlich zu erkennen, dass das Modell die Läsion nicht korrekt segmentiert.}
+        \label{fig:predicted_mask_coronal}
     \end{subfigure}
-    \caption{Comparison between input images (left), predicted masks (middle) and ground truth masks (right) for two different examples. The black prediction masks show that the model mainly predicts the background and fails to detect the lesions.}
+    \caption{Vergleich zwischen Input-Bild (links), vorhergesagter Maske (Mitte) und Ground Truth Maske (rechts) für zwei verschiedene Schnittebenen. Die schwarzen Vorhersagemasken zeigen, dass das Modell hauptsächlich den Hintergrund vorhersagt und die Läsionen nicht erkennt.}
     \label{fig:prediction_comparison}
 \end{figure}
 
