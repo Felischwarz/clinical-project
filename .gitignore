@@ -94,4 +94,8 @@ credentials.json
 # Add specific image files/directories if necessary
 # Exclude specific images that should be included
 !development/Figure_1.png
-!slicer/2025-04-10-Scene.png 
+!slicer/2025-04-10-Scene.png
+
+# Large binary files
+*.exe
+report/WindsurfUserSetup-x64-1.7.0.exe
