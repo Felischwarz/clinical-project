@@ -96,6 +96,3 @@ credentials.json
 !development/Figure_1.png
 !slicer/2025-04-10-Scene.png
 
-# Large binary files
-*.exe
-report/WindsurfUserSetup-x64-1.7.0.exe
