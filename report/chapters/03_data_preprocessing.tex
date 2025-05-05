@@ -1,24 +1,58 @@
 \chapter{Data Preprocessing}
 \label{ch:data_preprocessing}
 
-\section{Dataset}
-\label{sec:dataset}
-
-The dataset contains a file named isles24\_multimodal\_5fold\_NIHSSstratified.json which contains some useful information about the Dataset. It is divided into five folds as shown by the "fold" field for each case. The split is stratified by NIHSS scores, meaning that each fold has a balanced distribution of stroke severity, which ensures that cross-validation results are robust and representative of the entire cohort.
-
-\subsection{Dataset Structure}
+%\section{Dataset}
+%\label{sec:dataset}
+%
+%The dataset contains a file named isles24\_multimodal\_5fold\_NIHSSstratified.json which contains some useful information about the Dataset. It is divided into five folds as shown by the "fold" field for each case. The split is stratified by NIHSS scores, meaning that each fold has a balanced distribution of stroke severity, which ensures that cross-validation results are robust and representative of the entire cohort.
+%
+\section{Dataset Structure}
 \label{subsec:dataset_structure}
-
 The dataset is organized into three main subdirectories: "derivatives", "phenotype", and "raw\_data". 
 \begin{itemize}
-    \item "raw\_data" contains the original data from the ISLES24 challenge.
+    \item "raw\_data" contains the original, un-registered files from the ISLES24 challenge for:
+      \begin{itemize}
+        \item ses-01: ncct, cta, ctp, and perfusion maps.
+        \item ses-02: ADC and DWI MRI files.
+      \end{itemize}
     \item "phenotype" contains clinical and demographic information about the patients.
-    \item "derivatives" contains the processed data for each patient.
+    \item "derivatives" contains the processed data for each patient:
+      \begin{itemize}
+        \item For ses-01, the processing means registering (aligning) each file to the NCCT file which serves as the base as can be seen from the filename.
+        \item For ses-02, the processing means generating the label file that is derived from the gold standard DWI.
+      \end{itemize}
 \end{itemize}
 
-The tree subdirectories have a similar structure to the following example of derivatives for patient SUB-STROKE0001:
+In the following section, we will visualize the ADC and DWI MRI files for patient SUB-STROKE0001.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[height=4cm]{figures/raw_data/adc.png}
+  \includegraphics[height=4cm]{figures/raw_data/dwi.png}
+  \caption{Visualized ADC and DWI MRI files for patient SUB-STROKE0001.}
+  \label{fig:adc_dwi_visualization}
+\end{figure}
+
+The tree subdirectories have a similar structure to the following examples of derivative and raw data for patient SUB-STROKE0001:
 Since the folder structure is somewhat complex, we use the \texttt{tree path /F} command to visualize the structure of one patient's data (stored in SUB-STROKE0001). Each patient in the dataset has a similar directory structure:
+\begin{samepage}
 \begin{verbatim}
+D:\TUM_CLINICAL_PROJECT\ISLES24_COMBINED\RAW_DATA\SUB-STROKE0001
++---ses-01
+|   |   sub-stroke0001_ses-01_cta.nii.gz
+|   |   sub-stroke0001_ses-01_ctp.nii.gz
+|   |   sub-stroke0001_ses-01_ncct.nii.gz
+|   |
+|   \---perfusion-maps
+|           sub-stroke0001_ses-01_cbf.nii.gz
+|           sub-stroke0001_ses-01_cbv.nii.gz
+|           sub-stroke0001_ses-01_mtt.nii.gz
+|           sub-stroke0001_ses-01_tmax.nii.gz
+|
+\---ses-02
+        sub-stroke0001_ses-02_adc.nii.gz
+        sub-stroke0001_ses-02_dwi.nii.gz
+
 D:\TUM_CLINICAL_PROJECT\ISLES24_COMBINED\DERIVATIVES\SUB-STROKE0001
 +---ses-01
 |   |   sub-stroke0001_ses-01_space-ncct_cta.nii.gz
@@ -31,14 +65,15 @@ D:\TUM_CLINICAL_PROJECT\ISLES24_COMBINED\DERIVATIVES\SUB-STROKE0001
 |           sub-stroke0001_ses-01_space-ncct_tmax.nii.gz
 |
 \---ses-02
-            sub-stroke0001_ses-02_lesion-msk.nii.gz
+        sub-stroke0001_ses-02_lesion-msk.nii.gz
 \end{verbatim}
+\end{samepage}
 
-As shown above, the patient data is organized into two sessions:
-\begin{itemize}
-    \item \textbf{ses-01}: Contains the CT angiography (CTA) and CT perfusion (CTP) scans, acquired in the acute phase, along with derived perfusion maps (cerebral blood flow, cerebral blood volume, mean transit time, and time-to-maximum).
-    \item \textbf{ses-02}: Contains the lesion mask derived from follow-up MRI, which serves as the ground truth for our prediction task.
-\end{itemize}
+%As shown above, the patient data is organized into two sessions:
+%\begin{itemize}
+%    \item \textbf{ses-01}: Contains the CT angiography (CTA) and CT perfusion (CTP) scans, acquired in the acute phase, along with derived perfusion maps (cerebral blood flow, cerebral blood volume, mean transit time, and time-to-maximum).
+%    \item \textbf{ses-02}: Contains the lesion mask derived from follow-up MRI, which serves as the ground truth for our prediction task.
+%\end{itemize}
 
 This structure follows the BIDS (Brain Imaging Data Structure) format, which is a standardized way of organizing neuroimaging data. The naming convention includes subject ID, session, image space, and modality, making it easier to identify and process the files programmatically.
 

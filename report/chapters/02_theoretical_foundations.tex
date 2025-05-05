@@ -104,16 +104,42 @@ Diffusion-weighted imaging (DWI) is particularly valuable, as it is the only ima
         \caption{CT Perfusion (CTP) map}
         \label{fig:ctp}
     \end{subfigure}
+    
+    \vspace{0.5cm}
+    
+    \begin{subfigure}[t]{0.3\textwidth}
+        \includegraphics[width=\textwidth,height=4cm,keepaspectratio]{figures/ncct2.png}
+        \caption{Non-Contrast CT image (NCCT)}
+        \label{fig:ncct}
+    \end{subfigure}
     \caption{Multimodal stroke imaging data}
     \label{fig:perfusion_maps}
 \end{figure}
 
-\subsubsection{Technical Considerations}
+\subsection{Technical Considerations}
 
 Perfusion CT measures blood flow in the brain over time (every 1-2 seconds over 45-60 seconds) using a contrast agent. The derived perfusion maps help differentiate between irreversibly damaged (core) and salvageable (penumbra) tissue.
-
-Different software packages use different deconvolution algorithms and thresholds, which can lead to varying estimations of core and penumbra volumes. This variability presents a challenge for standardization across clinical centers and research studies.
+The data used in this project is from two clinical centers: Munich and Zurich. This limited availability of data from multiple centers reduces the variability of deconvolution algorithms and thresholds used in the estimation of core and penumbra volumes.
 
 \section{Lesion Masks and Ground Truth}
 
 Lesion masks represent binary infarct masks in the dataset and are derived from MRI images. They show the actual final infarct areas and are co-registered to the Non-Contrast CT (NCCT). These masks serve as ground truth—the target that predictive models aim to accurately reproduce based on earlier CT data. 
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/lesion_mask_ground_truth/without_mask.png}
+        \caption{NCCT without lesion mask}
+        \label{fig:ncct_without_mask}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/lesion_mask_ground_truth/with_mask.png}
+        \caption{NCCT with lesion mask overlay}
+        \label{fig:ncct_with_mask}
+    \end{subfigure}
+    \caption{Comparison of a Non-Contrast CT (NCCT) image without (left) and with (right) lesion mask overlay. The lesion mask highlights the final infarct area and serves as ground truth for predictive models.}
+    \label{fig:lesion_mask_comparison}
+\end{figure}
