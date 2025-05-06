@@ -18,6 +18,27 @@ def check_normalization(data, tol_mean=0.1, tol_std=0.1):
     else: 
         return "No Normalization"
     
+def apply_window_level(data, window_width, window_level):
+    """
+    Applies windowing to the data to emphasize specific intensity ranges.
+    
+    Args:
+        data: Input data (3D array)
+        window_width: Width of the window (range of values to emphasize)
+        window_level: Center of the window (mean value to emphasize)
+        
+    Returns:
+        Windowed data with values outside the window clipped
+    """
+    # Calculate window boundaries
+    window_min = window_level - window_width / 2
+    window_max = window_level + window_width / 2
+    
+    # Apply windowing (clip values outside the window)
+    windowed_data = np.clip(data, window_min, window_max)
+    
+    return windowed_data
+
 def normalize_data(data, method="min-max"): 
     """ Normalizes the data based on the specified method. """
     if method == "min-max": 
@@ -118,8 +139,10 @@ def visualize_normalization(data, normalized_data, slice_idx=None, method="z-sco
     else:
         plt.show()
     
-def normalize_nifti_file(input_file, output_file, method="z-score", visualize=False, visualization_output=None): 
-    """ Normalizes a NIfTI image based on the specified method and saves the result to a new file. """
+def normalize_nifti_file(input_file, output_file, method="z-score", visualize=False, visualization_output=None, 
+                         apply_window=False, window_width=None, window_level=None): 
+    """ Normalizes a NIfTI image based on the specified method and saves the result to a new file. 
+    Optional windowing can be applied before normalization to emphasize specific intensity ranges. """
     # Read the NIfTI image with float32 instead of float64 to save memory
     img = nib.load(input_file)
     data = img.get_fdata(dtype=np.float32)  
@@ -133,6 +156,12 @@ def normalize_nifti_file(input_file, output_file, method="z-score", visualize=Fa
     # Ensure the output directory exists
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
     
+    # Apply windowing if requested
+    original_data = data.copy()  # Keep a copy of the original data for visualization
+    if apply_window and window_width is not None and window_level is not None:
+        data = apply_window_level(data, window_width, window_level)
+        print(f"Applied windowing with width={window_width}, level={window_level}")
+    
     # Normalize the data
     normalized_data = normalize_data(data, method)
     
@@ -142,7 +171,8 @@ def normalize_nifti_file(input_file, output_file, method="z-score", visualize=Fa
         if vis_output is None and output_file.endswith('.nii.gz'):
             vis_output = output_file.replace('.nii.gz', f'_{method}_visualization.png')
         
-        visualize_normalization(data, normalized_data, method=method, output_file=vis_output)
+        # Use original data for visualization to show the effect of both windowing and normalization
+        visualize_normalization(original_data, normalized_data, method=method, output_file=vis_output)
         if vis_output:
             print(f"Visualization saved to {vis_output}")
     
@@ -175,6 +205,22 @@ if __name__ == "__main__":
     input_dir = r"D:\TUM_CLINICAL_PROJECT\ISLES24_COMBINED\DERIVATIVES"
     output_dir = r"D:\TUM_CLINICAL_PROJECT\output\normalized_data"
     visualize_dir = r"D:\TUM_CLINICAL_PROJECT\output\visualizations"
+    
+    # Define windowing parameters for different modalities
+    # These are example values - adjust based on your specific needs
+    windowing_params = {
+        # Modality: (apply_window, window_width, window_level)
+        "cta": (True, 200, 100),     # Example for CTA
+        "ctp": (True, 150, 75),      # Example for CTP
+        "cbf": (True, 100, 50),      # Example for CBF
+        "cbv": (True, 80, 40),       # Example for CBV
+        "mtt": (True, 120, 60),      # Example for MTT
+        "tmax": (True, 160, 80),     # Example for Tmax
+        # Add more modalities as needed
+    }
+    
+    # Default windowing parameters (used if modality not found in the dictionary)
+    default_window = (False, None, None)  # No windowing by default
     
     # Ensure the output directories exist
     os.makedirs(output_dir, exist_ok=True)
@@ -221,8 +267,21 @@ if __name__ == "__main__":
                                     print(f"Lesion mask copied to {output_file_path}.")
                             else:
                                 try:
-                                    normalize_nifti_file(file_path, output_file_path, "z-score", 
-                                                        visualize=True, visualization_output=vis_output_path)
+                                    # Determine modality from filename to select appropriate windowing parameters
+                                    modality = None
+                                    for mod in windowing_params.keys():
+                                        if mod in file.lower():
+                                            modality = mod
+                                            break
+                                    
+                                    # Get windowing parameters for this modality
+                                    apply_window, window_width, window_level = windowing_params.get(modality, default_window)
+                                    
+                                    normalize_nifti_file(
+                                        file_path, output_file_path, "z-score", 
+                                        visualize=True, visualization_output=vis_output_path,
+                                        apply_window=apply_window, window_width=window_width, window_level=window_level
+                                    )
                                 except Exception as e:
                                     print(f"Error normalizing {file_path}: {e}")
                         
@@ -242,11 +301,22 @@ if __name__ == "__main__":
                                 vis_output_path = os.path.join(perfusion_maps_vis_path, file.replace('.nii.gz', '_visualization.png'))
                                 
                                 try:
-                                    normalize_nifti_file(file_path, output_file_path, "z-score", 
-                                                        visualize=True, visualization_output=vis_output_path)
+                                    # Determine modality from filename to select appropriate windowing parameters
+                                    modality = None
+                                    for mod in windowing_params.keys():
+                                        if mod in file.lower():
+                                            modality = mod
+                                            break
+                                    
+                                    # Get windowing parameters for this modality
+                                    apply_window, window_width, window_level = windowing_params.get(modality, default_window)
+                                    
+                                    normalize_nifti_file(
+                                        file_path, output_file_path, "z-score", 
+                                        visualize=True, visualization_output=vis_output_path,
+                                        apply_window=apply_window, window_width=window_width, window_level=window_level
+                                    )
                                 except Exception as e:
                                     print(f"Error normalizing {file_path}: {e}")
                     
     print("Normalization and visualization completed.")
-
-

@@ -149,7 +149,7 @@ This normalization technique offers several advantages for medical image analysi
 \subsection{Normalization Script}
 \label{subsec:normalization_implementation}
 
-To make sure that we work with normalized data, I developed a Python script that iterates over all the NIfTI files in our dataset and applies Z-score normalization to them. In addition, the script visualizes the original and normalized images side by side and the difference map.
+To make sure that we work with normalized data, I developed a Python script that iterates over all the NIfTI files in our dataset and applies Z-score normalization to them. Specifically, the script processes all imaging data including CT angiography (CTA), CT perfusion (CTP), and the derived perfusion maps (CBF, CBV, MTT, and Tmax), while excluding lesion masks which should remain as binary data. In addition, the script visualizes the original and normalized images side by side and the difference map.  In the following analysis, we examine the results for the first patient (stored in \texttt{SUB-STROKE0001}) in our dataset.
 
 
 Figure \ref{fig:normalization_example} demonstrates the effects of Z-score normalization on a CT scan slice. This visualization highlights several important observations about the normalization process:
@@ -164,9 +164,11 @@ Figure \ref{fig:normalization_example} demonstrates the effects of Z-score norma
 As clearly illustrated in Figure \ref{fig:normalization_example}, Z-score normalization has several observable effects:
 
 \begin{itemize}
-    \item \textbf{Range transformation:} The original image has intensity values ranging from approximately -1027 to 1585, while the normalized image values are scaled to approximately -0.63 to 4.01. This demonstrates how the normalization process compresses the wide range of CT Hounsfield units into a standardized range centered around zero.
+    \item \textbf{Intensity windowing:} Before normalization, we apply a windowing technique (width/level adjustment) to emphasize specific intensity ranges of interest while de-emphasizing less important values such as those for bone or air. For example, for CTA images we use a window width of 200 and window level of 100, which focuses the normalization on the intensity range most relevant for vascular structures. Different window settings are applied for each imaging modality (CTP, CBF, CBV, MTT, Tmax) to optimize for their specific intensity characteristics.
     
-    \item \textbf{Statistical properties:} The mean value of the original image is -592.78 with a standard deviation of 590.12. After normalization, the mean is much closer to zero (0.14) with a standard deviation close to one (1.05), which closely aligns with the goal of Z-score normalization.
+    \item \textbf{Range transformation:} The original image has intensity values ranging from approximately -1027 to 1585, which is due to the range of air and bone over the Hounsefield Unit value spectrum (with the brain lying in between). After windowing and normalization, the image values are scaled to approximately -0.42 to 3.62, which demonstrates how the normalization process compresses this wide range into a standardized range centered around zero.
+    
+    \item \textbf{Statistical properties:} For this CTA image (slice 37 of patient \texttt{SUB-STROKE0001}), the mean value of the original image is -592.78 with a standard deviation of 590.12. After normalization, the mean is much closer to zero (0.14) with a standard deviation close to one (1.05), which closely aligns with the goal of Z-score normalization.
     
     \item \textbf{Contrast preservation:} Despite the intensity value transformation, the normalized image preserves the important structural features and contrast relationships of the original image.
    
