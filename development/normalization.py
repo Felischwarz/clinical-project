@@ -210,12 +210,12 @@ if __name__ == "__main__":
     # These are example values - adjust based on your specific needs
     windowing_params = {
         # Modality: (apply_window, window_width, window_level)
-        "cta": (True, 200, 100),     # Example for CTA
-        "ctp": (True, 150, 75),      # Example for CTP
-        "cbf": (True, 100, 50),      # Example for CBF
-        "cbv": (True, 80, 40),       # Example for CBV
-        "mtt": (True, 120, 60),      # Example for MTT
-        "tmax": (True, 160, 80),     # Example for Tmax
+        "cta": (True, 75, 40),    
+        "ctp": (True, 150, 75),     
+        "cbf": (True, 100, 50),      
+        "cbv": (True, 80, 40),      
+        "mtt": (True, 120, 60),    
+        "tmax": (True, 160, 80),    
         # Add more modalities as needed
     }
     
