@@ -35,6 +35,9 @@ env/
 # Jupyter Notebook
 .ipynb_checkpoints
 
+# Hidden development directory
+hidden_development/
+
 # LaTeX temporary files
 *.aux
 *.lof
