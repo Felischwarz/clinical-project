@@ -80,49 +80,18 @@ This structure follows the BIDS (Brain Imaging Data Structure) format, which is 
 % Content for the data preprocessing chapter will be added here 
 \section{Registration}
 \label{sec:registration}
-Even though the data has already been registirated we double check this by writing a short script. 
-We compare the affine matrix of the first images of the CT, perfusion and lesion. 
-We get the following results:
 
-\begin{lstlisting}[breaklines=true, basicstyle=\ttfamily\small]
-Filename: sub-stroke0001_ses-01_space-ncct_cta.nii.gz
-(-120.0, 254.75277709960938, -58.179813385009766)
-(0.46875, 0.46875, 2.0)
-(1.0, 0.0, 0.0, 0.0, -0.9659258450112692, -0.25881896370865276, 0.0, 0.25881897523030545, -0.9659258480984858)
-(512, 595, 75)
-Filename: sub-stroke0001_ses-01_space-ncct_ctp.nii.gz
-(-120.0, 216.44757080078125, -201.1368408203125)
-(0.46875, 0.46875, 2.0)
-(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0)
-(512, 595, 75)
-Filename: sub-stroke0001_ses-02_lesion-msk.nii.gz
-(-120.0, 254.75277709960938, -58.17981719970703)
-(0.46875, 0.46875, 2.0)
-(1.0, 0.0, 0.0, 0.0, -0.9659258410376269, -0.2588189915146001, 0.0, 0.25881899006014436, -0.9659258406479068)
-(512, 595, 75)
-Filename: sub-stroke0001_ses-01_space-ncct_cbf.nii.gz
-(-120.0, 254.75277709960938, -58.17981719970703)
-(0.46875, 0.46875, 2.0)
-(1.0, 0.0, 0.0, 0.0, -0.9659258410376269, -0.2588189915146001, 0.0, 0.25881899006014436, -0.9659258406479068)
-(512, 595, 75)
-Filename: sub-stroke0001_ses-01_space-ncct_cbv.nii.gz
-(-120.0, 254.75277709960938, -58.17981719970703)
-(0.46875, 0.46875, 2.0)
-(1.0, 0.0, 0.0, 0.0, -0.9659258410376269, -0.2588189915146001, 0.0, 0.25881899006014436, -0.9659258406479068)
-(512, 595, 75)
-Filename: sub-stroke0001_ses-01_space-ncct_mtt.nii.gz
-(-120.0, 254.75277709960938, -58.17981719970703)
-(0.46875, 0.46875, 2.0)
-(512, 595, 75)
-Filename: sub-stroke0001_ses-01_space-ncct_tmax.nii.gz
-(-120.0, 254.75277709960938, -58.17981719970703)
-(0.46875, 0.46875, 2.0)
-(1.0, 0.0, 0.0, 0.0, -0.9659258410376269, -0.2588189915146001, 0.0, 0.25881899006014436, -0.9659258406479068)
-(512, 595, 75)
-\end{lstlisting}
+Image registration is a crucial preprocessing step in medical image analysis that aligns different images to a common coordinate system. In the dataset, the registration process ensures that all imaging modalities (CT angiography, CT perfusion, and derived perfusion maps) are spatially aligned to the non-contrast CT (NCCT) image, which serves as the reference space.
 
-We see that the affine matrix is the same for all images except for the lesion mask. (This is fine as the lesion mask is not registered)
 
+
+Figure \ref{fig:registration_comparison} demonstrates the effectiveness of the registration process by comparing raw and registered Cerebral Blood Volume (CBV) data. The registration successfully aligns the perfusion data to the NCCT reference space, ensuring spatial consistency across all imaging modalities in the dataset.
+
+The derivatives directory contains already registered data for each modality, so we dont have to do the registration by hand.
+
+
+
+% also explain affine matrix here?
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=\textwidth]{figures/registration_comparison.png}
