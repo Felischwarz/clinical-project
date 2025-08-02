@@ -54,7 +54,8 @@ def normalize_data(data, method="min-max"):
     else: 
         raise ValueError(f"Invalid normalization method: {method}") 
 
-def visualize_normalization(data, normalized_data, slice_idx=None, method="z-score", output_file=None):
+def visualize_normalization(data, normalized_data, slice_idx=None, method="z-score", output_file=None, 
+                          apply_window_original=False, window_width=None, window_level=None):
     """
     Visualizes the original data and normalized data side by side.
     
@@ -64,6 +65,9 @@ def visualize_normalization(data, normalized_data, slice_idx=None, method="z-sco
         slice_idx: Index of the slice to be visualized. If None, the middle is chosen.
         method: Normalization method used (for the title)
         output_file: Path to save the visualization. If None, the visualization is displayed.
+        apply_window_original: Whether to apply windowing to the original image for better visualization
+        window_width: Width of the window for original image
+        window_level: Level of the window for original image
     """
     if slice_idx is None:
         slice_idx = data.shape[2] // 2  # Middle slice in z-direction
@@ -75,6 +79,14 @@ def visualize_normalization(data, normalized_data, slice_idx=None, method="z-sco
     # Extract the slice
     original_slice = data[:, :, slice_idx]
     normalized_slice = normalized_data[:, :, slice_idx]
+    
+    # Apply windowing to original slice for better visualization if requested
+    if apply_window_original and window_width is not None and window_level is not None:
+        original_slice_display = apply_window_level(original_slice, window_width, window_level)
+        original_title = f'Original (Window: {window_width}/{window_level})'
+    else:
+        original_slice_display = original_slice
+        original_title = f'Original (Slice {slice_idx})'
     
     # Create the figure
     fig = plt.figure(figsize=(12, 8))
@@ -91,8 +103,8 @@ def visualize_normalization(data, normalized_data, slice_idx=None, method="z-sco
     ax6 = fig.add_subplot(gs[1, 2])  # Comparison of the two histograms
     
     # Original image
-    im1 = ax1.imshow(original_slice, cmap='gray')
-    ax1.set_title(f'Original (Slice {slice_idx})')
+    im1 = ax1.imshow(original_slice_display, cmap='gray')
+    ax1.set_title(original_title)
     fig.colorbar(im1, ax=ax1, fraction=0.046, pad=0.04)
     
     # Normalized image
@@ -172,7 +184,10 @@ def normalize_nifti_file(input_file, output_file, method="z-score", visualize=Fa
             vis_output = output_file.replace('.nii.gz', f'_{method}_visualization.png')
         
         # Use original data for visualization to show the effect of both windowing and normalization
-        visualize_normalization(original_data, normalized_data, method=method, output_file=vis_output)
+        # Apply windowing to original image for better visualization
+        apply_window_original = apply_window and window_width is not None and window_level is not None
+        visualize_normalization(original_data, normalized_data, method=method, output_file=vis_output,
+                              apply_window_original=apply_window_original, window_width=window_width, window_level=window_level)
         if vis_output:
             print(f"Visualization saved to {vis_output}")
     
