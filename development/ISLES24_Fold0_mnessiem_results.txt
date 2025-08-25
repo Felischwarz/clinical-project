@@ -1,0 +1,156 @@
+Results for SwinUNetR\_NCCTstratified\_fold0:
+================================================================================
+Modalities                     DiceMedpyCoefficient AbsoluteLesionCountDifferenceCC3D HausdorffDistance95MonaiMm LesionF1CC3DScore
+-----------------------------------------------------------------------------------------------------------------------------------
+NCCT_level_20_window_80        0.148762           95.300000          110.552081         0.085078
+NCCT_level_20_window_50        0.148047           27.300000          100.501828         0.121763
+NCCT_level_20_window_70        0.143906           138.766667         125.065089         0.073483
+NCCT_level_20_window_60        0.139873           63.500000          111.783262         0.094123
+NCCT_level_35_window_15        0.136361           23.633333          86.891907          0.145874
+NCCT_level_20_window_40        0.135155           129.366667         112.585508         0.096144
+NCCT_level_35_window_20        0.131478           30.033333          97.268081          0.109968
+NCCT_level_32_window_7         0.130020           31.166667          100.082741         0.160415
+NCCT_level_40_window_70        0.126446           76.533333          111.146967         0.066408
+NCCT_level_25_window_35        0.123357           187.833333         111.832505         0.086914
+NCCT_level_32_window_8         0.118106           39.566667          107.785284         0.115356
+NCCT_level_35_window_10        0.118104           36.200000          109.638344         0.149207
+NCCT_min_minval_max_maxval     0.081660           10.433333          84.264078          0.481275
+
+Results for SwinUNetR\_CTAstratified\_fold0:
+================================================================================
+Modalities                     DiceMedpyCoefficient AbsoluteLesionCountDifferenceCC3D HausdorffDistance95MonaiMm LesionF1CC3DScore
+-----------------------------------------------------------------------------------------------------------------------------------
+CTA_w_53_l_49                  0.141823           36.533333          100.346259         0.121350
+CTA_w_45_l_49                  0.141155           58.900000          107.068149         0.103686
+CTA_w_75_l_40                  0.141076           20.366667          97.258660          0.138413
+CTA_w_29_l_49                  0.135133           216.233333         108.049894         0.120984
+CTA_w_29_l_45                  0.131131           34.566667          106.526955         0.128840
+CTA_w_37_l_49                  0.130794           100.033333         113.168059         0.101783
+CTA_w_45_l_35                  0.130357           32.800000          103.803710         0.141716
+CTA_w_128_l_70                 0.130197           34.433333          104.234406         0.116256
+CTA_w_96_l_50                  0.130128           28.700000          106.282710         0.121376
+CTA_w_45_l_41                  0.129782           46.266667          110.598443         0.113321
+CTA_w_112_l_60                 0.129726           36.200000          102.532161         0.098000
+CTA_standard_w_80_l_40         0.113883           36.633333          102.237166         0.109436
+CTA_min_minval_max_maxval      0.097966           10.366667          89.616528          0.329892
+
+
+Results for SwinUNetR\_CBFstratified\_fold0:
+================================================================================
+Modalities                     DiceMedpyCoefficient AbsoluteLesionCountDifferenceCC3D HausdorffDistance95MonaiMm LesionF1CC3DScore
+-----------------------------------------------------------------------------------------------------------------------------------
+CBF_min_0_max_18               0.209484           22.500000          97.339185          0.097921
+CBF_min_0_max_70               0.209128           25.800000          94.314032          0.103682
+CBF_min_0_max_25               0.207376           19.700000          96.932480          0.116171
+CBF_min_0_max_15               0.202590           19.433333          100.300677         0.108707
+CBF_min_0_max_30               0.192877           23.200000          107.702442         0.075186
+CBF_min_0_max_20               0.192421           22.266667          96.349701          0.103133
+CBF_min_0_max_40               0.186737           14.400000          97.255719          0.125517
+CBF_min_0_max_12               0.177959           25.466667          104.410873         0.097575
+CBF_min_0_max_60               0.176783           52.466667          99.974022          0.088391
+CBF_min_0_max_10               0.176556           19.766667          102.706999         0.118715
+CBF_min_0_max_6                0.156174           18.333333          102.422719         0.164664
+CBF_min_minval_max_maxval      0.147298           76.366667          103.774839         0.103669
+
+Results for SwinUNetR\_CBVstratified\_fold0:
+================================================================================
+Modalities                     DiceMedpyCoefficient AbsoluteLesionCountDifferenceCC3D HausdorffDistance95MonaiMm LesionF1CC3DScore
+-----------------------------------------------------------------------------------------------------------------------------------
+CBV_min_0_max_maxval           0.090927           400.200000         107.615947         0.052518
+CBV_min_0_max_9                0.088817           68.200000          114.344800         0.057426
+CBV_min_0_max_1.9              0.083094           53.300000          108.221494         0.139665
+CBV_min_0_max_2.2              0.082795           37.833333          107.791634         0.125045
+CBV_min_0_max_6                0.079261           51.000000          113.371722         0.071834
+CBV_min_0_max_1.8              0.069887           40.633333          103.540600         0.211178
+CBV_min_0_max_4                0.068338           32.000000          110.784013         0.102373
+CBV_min_0_max_2                0.066121           63.500000          110.791974         0.128831
+
+Results for SwinUNetR\_TMAXstratified\_fold0:
+================================================================================
+Modalities                     DiceMedpyCoefficient AbsoluteLesionCountDifferenceCC3D HausdorffDistance95MonaiMm LesionF1CC3DScore
+-----------------------------------------------------------------------------------------------------------------------------------
+TMAX_min_0_max_30              0.149634           73.366667          113.662452         0.115367
+TMAX_min_0_max_10              0.149220           88.300000          117.675072         0.108615
+TMAX_min_0_max_maxval          0.143924           51.966667          119.698595         0.111318
+TMAX_min_0_max_16              0.140320           47.166667          114.284566         0.140477
+TMAX_min_0_max_12              0.135883           47.333333          118.582996         0.107955
+TMAX_min_0_max_6               0.132671           59.000000          119.857247         0.134873
+TMAX_min_0_max_8               0.124506           111.666667         118.062892         0.104778
+TMAX_min_4_max_10              0.124363           25.633333          98.988328          0.115161
+TMAX_min_4_max_30              0.122731           14.266667          102.677709         0.188025
+TMAX_min_0_max_4               0.116031           37.100000          109.148269         0.160815
+
+Results for SwinUNetR\_MTTstratified\_fold0:
+================================================================================
+Modalities                     DiceMedpyCoefficient AbsoluteLesionCountDifferenceCC3D HausdorffDistance95MonaiMm LesionF1CC3DScore
+-----------------------------------------------------------------------------------------------------------------------------------
+MTT_min_8_max_30               0.103566           46.433333          104.621731         0.125888
+MTT_min_0_max_16               0.099089           39.900000          108.352573         0.137641
+MTT_min_10_max_30              0.094157           53.733333          104.172968         0.116507
+MTT_min_0_max_12               0.091988           30.833333          108.628500         0.162138
+MTT_min_0_max_30               0.088539           76.000000          116.916307         0.081546
+MTT_min_0_max_10               0.084443           61.466667          102.356356         0.231361
+MTT_min_6_max_30               0.083646           50.166667          109.890107         0.093398
+MTT_min_4_max_10               0.082733           61.400000          99.311951          0.227832
+MTT_min_6_max_10               0.082697           48.566667          106.755515         0.166844
+MTT_min_0_max_maxval           0.080676           21.433333          103.144429         0.126948
+
+Results for SwinUNetR\_MULTIBASELINEstratified\_fold0:
+================================================================================
+Modalities                     DiceMedpyCoefficient AbsoluteLesionCountDifferenceCC3D HausdorffDistance95MonaiMm LesionF1CC3DScore
+-----------------------------------------------------------------------------------------------------------------------------------
+CBF_min_minval_max_maxval,     0.233936           17.233333          81.092462          0.170731
+CTA_min_minval_max_maxval,
+TMAX_min_0_max_maxval
+CBF_min_minval_max_maxval,     0.225644           35.233333          92.918195          0.149154
+CTA_min_minval_max_maxval,
+NCCT_min_minval_max_maxval,
+TMAX_min_0_max_maxval
+CBF_min_minval_max_maxval,     0.188828           41.900000          108.331339         0.108064
+TMAX_min_0_max_maxval
+CBF_min_minval_max_maxval,     0.186490           34.133333          92.295490          0.084548
+CTA_min_minval_max_maxval
+
+Results for SwinUNetR\_SINGCHANMULTWINstratified\_fold0:
+================================================================================
+Modalities                     DiceMedpyCoefficient AbsoluteLesionCountDifferenceCC3D HausdorffDistance95MonaiMm LesionF1CC3DScore
+-----------------------------------------------------------------------------------------------------------------------------------
+CBF_min_0_max_18,              0.196327           24.400000          101.157678         0.092172
+CBF_min_0_max_70
+CTA_min_minval_max_maxval,     0.163375           11.533333          84.861601          0.159411
+CTA_w_75_l_40
+NCCT_level_20_window_60,       0.151467           18.433333          88.553271          0.174327
+NCCT_min_minval_max_maxval
+NCCT_level_20_window_80,       0.150757           19.733333          86.777476          0.162727
+NCCT_min_minval_max_maxval
+TMAX_min_0_max_maxval,         0.122665           46.400000          113.787554         0.122910
+TMAX_min_4_max_30
+CBV_min_0_max_1.9,             0.087850           58.000000          110.783531         0.100398
+CBV_min_0_max_2.2
+MTT_min_0_max_16,              0.084531           35.866667          104.398952         0.129918
+MTT_min_10_max_30
+
+Results for SwinUNetR\_MULTIMODALstratified\_fold0:
+================================================================================
+Modalities                     DiceMedpyCoefficient AbsoluteLesionCountDifferenceCC3D HausdorffDistance95MonaiMm LesionF1CC3DScore
+-----------------------------------------------------------------------------------------------------------------------------------
+CBF_min_0_max_70,              0.239632           16.333333          77.779783          0.130953
+CTA_min_minval_max_maxval,
+CTA_w_75_l_40,
+MTT_min_10_max_30,
+NCCT_level_20_window_60,
+NCCT_min_minval_max_maxval,
+TMAX_min_4_max_30
+CBF_min_0_max_70,              0.233669           20.833333          95.883261          0.103658
+CTA_min_minval_max_maxval,
+CTA_w_75_l_40
+CBF_min_0_max_70,              0.226820           19.000000          90.823675          0.125453
+CTA_min_minval_max_maxval,
+CTA_w_75_l_40,
+NCCT_level_20_window_60,
+NCCT_min_minval_max_maxval,
+TMAX_min_4_max_30
+CBF_min_0_max_70,              0.226153           34.233333          93.780310          0.113770
+CTA_min_minval_max_maxval,
+CTA_w_75_l_40,
+TMAX_min_4_max_30

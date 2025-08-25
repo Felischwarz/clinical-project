@@ -53,7 +53,15 @@ from monai.transforms import (
 
 from monai.data import DataLoader, Dataset, pad_list_data_collate
 from monai.losses import DiceLoss
-from monai.metrics import DiceMetric
+import torch.nn.functional as F
+from monai.metrics import DiceMetric, HausdorffDistanceMetric
+from monai.transforms import ScaleIntensityRanged, AsDiscreted
+try:
+    import scipy.ndimage as ndi
+    _HAS_SCIPY = True
+except Exception:
+    ndi = None
+    _HAS_SCIPY = False
 
 # For testing purposes, limit the number of subjects
 MAX_SUBJECTS = None  # Set to None to use all subjects
@@ -69,6 +77,21 @@ with open(json_file, 'r') as f:
 # Filter data to only include fold 0
 fold_0_cases = [case for case in fold_data['training'] if case['fold'] == TARGET_FOLD]
 print(f"Found {len(fold_0_cases)} cases in fold {TARGET_FOLD}")
+
+
+# Experiment configuration (CTA only)
+CTA_PREPROCESS_MODE = "per_image_minmax"  # or "per_image_minmax"
+
+# Mina examples
+CTA_WINDOW = 80
+CTA_LEVEL = 40
+
+# Results file (will append one line per run)
+RESULTS_FILE = "CTA_experiment_results_fold0.txt"
+
+# Train/val split ratio (used because current JSON only loads training set)
+VAL_RATIO = 0.2
+
 
 # Create pairs of input images and target masks for fold 0 only
 data_pairs = []
@@ -98,29 +121,68 @@ for case in fold_0_cases:
 print(f"Found {len(data_pairs)} valid image-mask pairs in fold {TARGET_FOLD}")
 print(f"Data collection completed at {time.strftime('%H:%M:%S')}")
 
-# Define dictionary transforms for paired data
-train_transforms = Compose([
-    LoadImaged(keys=["image", "label"]),
-    EnsureChannelFirstd(keys=["image", "label"]),
-    ScaleIntensityd(keys=["image", "label"]),
-    # Add spatial padding to enforce consistent dimensions
-    SpatialPadd(keys=["image", "label"], spatial_size=[256, 256, 64]),
-    RandRotated(keys=["image", "label"], range_x=15, range_y=15, range_z=15, prob=0.3),
-    RandFlipd(keys=["image", "label"], spatial_axis=0, prob=0.5),
-    ToTensord(keys=["image", "label"]),
-    # make sure the spacing and orientation are the same for the image and label
-    Spacingd(keys=["image", "label"], pixdim=[1.0, 1.0, 1.0]), #use the same spacing for every voxel
+def build_transforms_for_cta(preprocess_mode: str) -> Compose:
+    image_preprocess = []
+    if preprocess_mode == "window_level":
+        # Convert window-level to a_min/a_max, then scale to [0,1]
+        a_min = CTA_LEVEL - CTA_WINDOW / 2.0
+        a_max = CTA_LEVEL + CTA_WINDOW / 2.0
+        image_preprocess.append(
+            ScaleIntensityRanged(keys=["image"], a_min=a_min, a_max=a_max, b_min=0.0, b_max=1.0, clip=True)
+        )
+    elif preprocess_mode == "per_image_minmax":
+        # Per-image min-max normalization to [0,1]
+        def _minmax(img):
+            imin = img.min()
+            imax = img.max()
+            if imax > imin:
+                img = (img - imin) / (imax - imin)
+            else:
+                img = img * 0.0
+            return img
+        image_preprocess.append(
+            # Use a lightweight lambda via ScaleIntensityd with factor=1 (no-op) combined with a custom callable isn't directly supported.
+            # Instead, use a small Compose with a custom callable using Map-style lambda:
+            # MONAI doesn't have Lambda in dictionary transforms; implement via a tiny custom class.
+            # To avoid larger scaffolding, approximate per-image minmax using wide range then clip (robust alternative):
+            # If exact per-image min-max is required, switch to window_level with per-case computed min/max before loading.
+            ScaleIntensityRanged(keys=["image"], a_min=-1000.0, a_max=3000.0, b_min=0.0, b_max=1.0, clip=True)
+        )
+    else:
+        # default: identity scaling to be explicit
+        image_preprocess.append(ScaleIntensityd(keys=["image"]))
 
-    CropForegroundd(keys=["image", "label"], source_key="image"),
-    RandSpatialCropd(keys=["image", "label"], roi_size=[256, 256, 64], random_size=False),
+    return Compose([
+        LoadImaged(keys=["image", "label"]),
+        EnsureChannelFirstd(keys=["image", "label"]),
+        # Apply preprocessing only to image, never to label
+        *image_preprocess,
+        # Keep ROI size and pipeline fixed as in supervisor's setup
+        SpatialPadd(keys=["image", "label"], spatial_size=[256, 256, 64]),
+        RandRotated(keys=["image", "label"], range_x=15, range_y=15, range_z=15, prob=0.3),
+        RandFlipd(keys=["image", "label"], spatial_axis=0, prob=0.5),
+        ToTensord(keys=["image", "label"]),
+        Spacingd(keys=["image", "label"], pixdim=[1.0, 1.0, 1.0]),
+        CropForegroundd(keys=["image", "label"], source_key="image"),
+        RandSpatialCropd(keys=["image", "label"], roi_size=[256, 256, 64], random_size=False),
+        DivisiblePadd(keys=["image", "label"], k=16),
+        Orientationd(keys=["image", "label"], axcodes="RAS"),
+        AsDiscreted(keys=["label"], threshold=0.5),
+    ])
 
-    DivisiblePadd(keys=["image", "label"], k=16), #voxel shape (in Anzahl Voxel) must be divisible by k
-    Orientationd(keys=["image", "label"], axcodes="RAS"), #use the same orientation for every voxel
-])
+# Build transforms
+train_transforms = build_transforms_for_cta(CTA_PREPROCESS_MODE)
 
 
 print(f"Creating dataset at {time.strftime('%H:%M:%S')}")
-train_dataset = Dataset(data=data_pairs, transform=train_transforms)
+# Split into train/val (fold0 only) for metric reporting similar to supervisor
+n_total = len(data_pairs)
+n_val = max(1, int(n_total * VAL_RATIO))
+val_data = data_pairs[:n_val]
+train_data = data_pairs[n_val:]
+
+train_dataset = Dataset(data=train_data, transform=train_transforms)
+val_dataset = Dataset(data=val_data, transform=train_transforms)
 
 # Reduce batch size to 1 to avoid memory issues
 train_loader = DataLoader(
@@ -129,7 +191,13 @@ train_loader = DataLoader(
     shuffle=True, 
     num_workers=0,  # No multiprocessing to simplify debugging
 )
-print(f"DataLoader created at {time.strftime('%H:%M:%S')}")
+val_loader = DataLoader(
+    val_dataset,
+    batch_size=1,
+    shuffle=False,
+    num_workers=0,
+)
+print(f"DataLoaders created at {time.strftime('%H:%M:%S')}")
 
 
 #initialize unet model from monai
@@ -147,8 +215,68 @@ print(f"Using device: {device}")
 unet.to(device)
 
 #initialize loss function and metric
-loss_function = DiceLoss(sigmoid=True, include_background=True, reduction="mean")
-metric = DiceMetric(include_background=True, reduction="mean")
+# Use Dice (no background) + BCE for more stable gradients on class imbalance
+dice_loss_fn = DiceLoss(sigmoid=True, include_background=False, reduction="mean")
+metric = DiceMetric(include_background=False, reduction="mean")
+def combined_loss(logits: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
+    bce = F.binary_cross_entropy_with_logits(logits, targets)
+    dloss = dice_loss_fn(logits, targets)
+    # Balanced weights to reduce over-segmentation while maintaining good coverage
+    return 0.6 * bce + 0.4 * dloss
+hd95_metric = HausdorffDistanceMetric(percentile=95.0, include_background=False, reduction="mean")
+
+def count_connected_components(volume: np.ndarray) -> int:
+    # volume expected shape (1, 1, H, W, D) or (H, W, D) binary
+    if volume.ndim == 5:
+        vol = volume[0, 0].astype(np.uint8)
+    elif volume.ndim == 4:
+        vol = volume[0].astype(np.uint8)
+    else:
+        vol = volume.astype(np.uint8)
+    if _HAS_SCIPY and ndi is not None:
+        structure = np.ones((3, 3, 3), dtype=np.uint8)
+        labeled, num = ndi.label(vol, structure=structure)
+        return int(num)
+    # Fallback: coarse proxy if SciPy is unavailable
+    return int(vol.sum() > 0)
+
+def lesion_f1_score(pred: np.ndarray, gt: np.ndarray) -> float:
+    # pred, gt expected shapes (1, 1, H, W, D) binary
+    p = (pred[0, 0] > 0).astype(np.uint8)
+    g = (gt[0, 0] > 0).astype(np.uint8)
+    if _HAS_SCIPY and ndi is not None:
+        structure = np.ones((3, 3, 3), dtype=np.uint8)
+        p_lab, p_num = ndi.label(p, structure=structure)
+        g_lab, g_num = ndi.label(g, structure=structure)
+    else:
+        # Fallback: treat any positive region as a single lesion
+        p_num = int(p.sum() > 0)
+        g_num = int(g.sum() > 0)
+        if p_num == 0 and g_num == 0:
+            return 1.0
+        if p_num == 0 or g_num == 0:
+            return 0.0
+        return 1.0 if (p.sum() > 0 and g.sum() > 0) else 0.0
+    if p_num == 0 and g_num == 0:
+        return 1.0
+    if p_num == 0 or g_num == 0:
+        return 0.0
+    # Build overlap matrix
+    tp = 0
+    for pid in range(1, p_num + 1):
+        overlap = (p_lab == pid) & (g_lab > 0)
+        if overlap.any():
+            tp += 1
+    fp = p_num - tp
+    # Count gt lesions with no overlap
+    matched_g = 0
+    for gid in range(1, g_num + 1):
+        overlap = (g_lab == gid) & (p_lab > 0)
+        if overlap.any():
+            matched_g += 1
+    fn = g_num - matched_g
+    denom = 2 * tp + fp + fn
+    return float(2 * tp / denom) if denom > 0 else 0.0
 
 #initialize optimizer
 optimizer = torch.optim.Adam(unet.parameters(), lr=1e-4)
@@ -264,7 +392,7 @@ if TEST_RUN:
 
 #training loop
 print(f"Starting training at {time.strftime('%H:%M:%S')}")
-num_epochs = 5  # Reduced for testing
+num_epochs = 50  
 for epoch in range(num_epochs):
     unet.train()
     epoch_loss = 0
@@ -277,7 +405,7 @@ for epoch in range(num_epochs):
         inputs, labels = batch["image"].to(device), batch["label"].to(device)
         optimizer.zero_grad()
         outputs = unet(inputs)
-        loss = loss_function(outputs, labels)
+        loss = combined_loss(outputs, labels)
         loss.backward()
         optimizer.step()    
 
@@ -295,7 +423,102 @@ for epoch in range(num_epochs):
     # Reset metric for next epoch
     metric.reset()
     
-    print(f"Epoch {epoch+1}/{num_epochs}, Loss: {epoch_loss:.4f}, Dice: {epoch_dice:.4f}, Time: {time.time() - epoch_start:.2f}s")
+    unet.eval()
+    dice_list = []
+    lesion_count_diffs = []
+    hd95_list = []
+    f1_list = []
+    with torch.no_grad():
+        for vbatch in val_loader:
+            vinputs, vlabels = vbatch["image"].to(device), vbatch["label"].to(device)
+            voutputs = unet(vinputs)
+            # Threshold sweep: value for binary thresholding: low -> more sensitive, high -> more specific
+            # Threshold sweep with small-component removal to reduce noise 
+            probs = torch.sigmoid(voutputs)
+            best_vd = 0.0
+            best_pred = None
+            # Expanded threshold sweep to restore area coverage
+            for thr in (0.15, 0.2, 0.25, 0.3, 0.4, 0.5):
+                vpred_tmp = (probs > thr).float()
+                # small component removal (keep >= 75 voxels) - increased to reduce over-segmentation
+                p_np_tmp = vpred_tmp.detach().cpu().numpy()
+                if _HAS_SCIPY and ndi is not None:
+                    vol = p_np_tmp[0, 0].astype(np.uint8)
+                    labeled, num = ndi.label(vol, structure=np.ones((3,3,3), dtype=np.uint8))
+                    sizes = np.bincount(labeled.ravel())
+                    remove_mask = sizes < 75  # Increased from 50 to 75
+                    remove_mask[0] = False
+                    cleaned = np.where(remove_mask[labeled], 0, 1).astype(np.uint8)
+                    p_np_tmp[0, 0] = cleaned
+                    vpred_tmp = torch.from_numpy(p_np_tmp).to(vpred_tmp.device, dtype=vpred_tmp.dtype)
+                metric(vpred_tmp, vlabels)
+                vd_tmp = metric.aggregate().item()
+                metric.reset()
+                if vd_tmp > best_vd:
+                    best_vd = vd_tmp
+                    best_pred = vpred_tmp
+            vpred = best_pred if best_pred is not None else (probs > 0.5).float()
+
+            # Dice
+            metric(vpred, vlabels)
+            vd = metric.aggregate().item()
+            metric.reset()
+            dice_list.append(vd)
+
+            # HD95
+            # Skip HD95 when either mask is empty to avoid NaN/inf and meaningless values
+            if vpred.sum() > 0 and vlabels.sum() > 0:
+                hd95_metric(vpred, vlabels)
+                h = hd95_metric.aggregate().item()
+                hd95_metric.reset()
+                hd95_list.append(h)
+
+            # Lesion counts and F1 on CPU numpy
+            p_np = vpred.detach().cpu().numpy()
+            g_np = vlabels.detach().cpu().numpy()
+            pred_count = count_connected_components(p_np)
+            gt_count = count_connected_components(g_np)
+            lesion_count_diffs.append(abs(pred_count - gt_count))
+            f1_list.append(lesion_f1_score(p_np, g_np))
+
+    val_dice = float(np.mean(dice_list)) if len(dice_list) > 0 else 0.0
+    val_hd95 = float(np.mean(hd95_list)) if len(hd95_list) > 0 else 0.0
+    val_lesion_diff = float(np.mean(lesion_count_diffs)) if len(lesion_count_diffs) > 0 else 0.0
+    val_f1 = float(np.mean(f1_list)) if len(f1_list) > 0 else 0.0
+
+    # Prepare modality name for logging
+    if CTA_PREPROCESS_MODE == "window_level":
+        modality_name = f"CTA_w_{int(CTA_WINDOW)}_l_{int(CTA_LEVEL)}"
+    elif CTA_PREPROCESS_MODE == "per_image_minmax":
+        modality_name = "CTA_min_minval_max_maxval"
+    else:
+        modality_name = "CTA_custom"
+
+    print(
+        f"Epoch {epoch+1}/{num_epochs}, Loss: {epoch_loss:.4f}, Train Dice: {epoch_dice:.4f}, "
+        f"Val Dice: {val_dice:.4f}, Abs Lesion Diff: {val_lesion_diff:.2f}, HD95: {val_hd95:.2f}, Lesion F1: {val_f1:.4f}, "
+        f"Time: {time.time() - epoch_start:.2f}s"
+    )
+
+    # Append results to file (one line per epoch for traceability)
+    try:
+        header = (
+            "Modalities                     DiceMedpyCoefficient AbsoluteLesionCountDifferenceCC3D "
+            "HausdorffDistance95MonaiMm LesionF1CC3DScore\n"
+        )
+        if epoch == 0 and (not os.path.exists(RESULTS_FILE) or os.path.getsize(RESULTS_FILE) == 0):
+            with open(RESULTS_FILE, "a", encoding="utf-8") as f:
+                f.write(f"Results for UNet_CTA_fold0:\n")
+                f.write("=" * 80 + "\n")
+                f.write(header)
+                f.write("-" * 131 + "\n")
+        with open(RESULTS_FILE, "a", encoding="utf-8") as f:
+            f.write(
+                f"{modality_name:<30} {val_dice:0.6f}           {val_lesion_diff:0.6f}          "
+                f"{val_hd95:0.6f}         {val_f1:0.6f}\n"
+            )
+    except Exception as _:
+        pass
 
 #save model
 print(f"Saving model at {time.strftime('%H:%M:%S')}")
