@@ -11,6 +11,10 @@ To gain a better understanding of the data and task at hand, we first implement 
 \label{sec:unet_architecture}
 
 % Content to be added about the specific UNet architecture used
+Unet is a type of convolutional neural network (CNN) that is particularly well-suited for image segmentation tasks \cite{ronneberger2015u-net}. It is a fully convolutional network, meaning that it does not use any fully connected layers. Instead, it uses a series of convolutional layers to extract features from the input image, and then uses a series of upsampling layers to reconstruct the output image. The output of the network is a segmentation mask of the same size as the input image.
+The UNet architecture is composed of two main parts: the encoder and the decoder. The encoder is a series of convolutional layers that extract features from the input image. The decoder is a series of upsampling layers that reconstruct the output image. You can think of this architecture like downscaling an Image to see the main components like edges or Forms. Because we are interested in these, we should ignore finer details which are abstracted away during downscaling. skip connections between the encoder and the decoder. The skip connections allow the network to combine low-level and high-level features, which is crucial for capturing fine-grained details in the output mask.
+
+The UNet architecture is illustrated in Figure~\ref{fig:unet_architecture}.
 
 \section{Implementation}
 \label{sec:implementation}

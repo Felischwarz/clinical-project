@@ -4,6 +4,7 @@ Dice loss and Dice metric are used as the loss function and metric respectively.
 '''
 
 data_dir = r"D:\TUM_CLINICAL_PROJECT\ISLES24_COMBINED\DERIVATIVES"
+json_file = r"D:\TUM_CLINICAL_PROJECT\ISLES24_COMBINED\isles24_multimodal_5fold_NIHSSstratified.json"
 
 '''
 Folder structure: 
@@ -29,6 +30,7 @@ import torch
 import time
 import matplotlib.pyplot as plt
 import numpy as np
+import json
 
 from monai.networks.nets import UNet
 from monai.transforms import (
@@ -50,45 +52,50 @@ from monai.transforms import (
 )
 
 from monai.data import DataLoader, Dataset, pad_list_data_collate
-from torch.nn import BCEWithLogitsLoss
+from monai.losses import DiceLoss
 from monai.metrics import DiceMetric
 
 # For testing purposes, limit the number of subjects
 MAX_SUBJECTS = None  # Set to None to use all subjects
+TARGET_FOLD = 0  # Only train on fold 0
 
 print(f"Starting data loading at {time.strftime('%H:%M:%S')}")
 
-# Create pairs of input images and target masks
+# Load the JSON file with fold information
+print(f"Loading fold information from {json_file}")
+with open(json_file, 'r') as f:
+    fold_data = json.load(f)
+
+# Filter data to only include fold 0
+fold_0_cases = [case for case in fold_data['training'] if case['fold'] == TARGET_FOLD]
+print(f"Found {len(fold_0_cases)} cases in fold {TARGET_FOLD}")
+
+# Create pairs of input images and target masks for fold 0 only
 data_pairs = []
 subject_count = 0
-for subject in os.listdir(data_dir): 
-    subject_path = os.path.join(data_dir, subject)
-    if os.path.isdir(subject_path):
-        # Look for input images in ses-01
-        input_files = {}
-        
-        # Find the input image (CT) in session 01
-        session1_path = os.path.join(subject_path, "ses-01")
-        if os.path.isdir(session1_path):
-            for file in os.listdir(session1_path):
-                if file.endswith("_cta.nii.gz"):  # Using CTA as input
-                    input_files["image"] = os.path.join(session1_path, file)
-        
-        # Find the mask in session 02
-        session2_path = os.path.join(subject_path, "ses-02")
-        if os.path.isdir(session2_path):
-            for file in os.listdir(session2_path):
-                if "lesion-msk" in file:
-                    input_files["label"] = os.path.join(session2_path, file)
-        
-        # If we have both input and mask, add to our dataset
-        if "image" in input_files and "label" in input_files:
-            data_pairs.append(input_files)
-            subject_count += 1
-            if MAX_SUBJECTS is not None and subject_count >= MAX_SUBJECTS:
-                break
 
-print(f"Found {len(data_pairs)} valid image-mask pairs")
+for case in fold_0_cases:
+    case_id = case['caseID']
+    
+    # Construct the paths based on the JSON structure
+    input_file = case['CTA']  # Using CTA as input
+    label_file = case['label']
+    
+    # Check if both files exist
+    if os.path.exists(os.path.join(data_dir, '..', input_file)) and os.path.exists(os.path.join(data_dir, '..', label_file)):
+        data_pairs.append({
+            "image": os.path.join(data_dir, '..', input_file),
+            "label": os.path.join(data_dir, '..', label_file)
+        })
+        subject_count += 1
+        if MAX_SUBJECTS is not None and subject_count >= MAX_SUBJECTS:
+            break
+    else:
+        print(f"Warning: Files not found for case {case_id}")
+        print(f"  Input: {os.path.join(data_dir, '..', input_file)}")
+        print(f"  Label: {os.path.join(data_dir, '..', label_file)}")
+
+print(f"Found {len(data_pairs)} valid image-mask pairs in fold {TARGET_FOLD}")
 print(f"Data collection completed at {time.strftime('%H:%M:%S')}")
 
 # Define dictionary transforms for paired data
@@ -140,7 +147,7 @@ print(f"Using device: {device}")
 unet.to(device)
 
 #initialize loss function and metric
-loss_function = BCEWithLogitsLoss()
+loss_function = DiceLoss(sigmoid=True, include_background=True, reduction="mean")
 metric = DiceMetric(include_background=True, reduction="mean")
 
 #initialize optimizer
