@@ -1,50 +1,95 @@
-\chapter{UNet Test Model Implementation with MONAI}
+\chapter{UNet Model Implementation}
 \label{ch:unet_model}
-To gain a better understanding of the data and task at hand, we first implement a simple UNet model using the MONAI framework. This serves as a baseline implementation before developing our own custom model architecture in later stages.
+In the following chapter, we will implement a UNet model using the MONAI framework using only one modality, the CTA.
 
 \section{MONAI Pipeline Overview}
 \label{sec:monai_pipeline}
 
-% Content to be added about the MONAI pipeline implementation
+The MONAI framework (Medical Open Network for AI) provides a modular pipeline that allows for efficient development of deep learning models in medical imaging. 
+A typical pipeline within MONAI consists of three main stages: data preprocessing, model definition, and training/evaluation. 
+In this project, we employ this structure to implement a UNet model using CTA images as the sole modality. MONAI is specifically designed to empower researchers and clinicians alike by providing domain-specific transformations and workflows for medical imaging tasks.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/Monai_overview.png}
+    \caption{Overview of the typical MONAI pipeline for deep learning in medical imaging. The workflow illustrates the complete process from data input (NIFTI files) to the final model. Adapted from \cite{monai2020highlights}.}
+    \label{fig:monai_overview}
+\end{figure}
+
+
+\subsection*{Data Preprocessing and Loading}
+The preprocessing stage ensures that raw CTA scans are transformed into a format suitable for model training. 
+For this, MONAI offers a variety of \textit{transforms}, which can be chained together in a \texttt{Compose} object.  \cite{learnopencv2023monai}
+Key steps in our preprocessing include:
+\begin{itemize}
+    \item \textbf{Loading and Conversion:} Using \texttt{LoadImaged} to read NIfTI files and \texttt{EnsureChannelFirstd} to standardize the data layout.
+    \item \textbf{Resampling:} Aligning voxel spacing across scans to ensure uniform resolution, which is crucial for batch training.
+    \item \textbf{Normalization:} Intensity normalization (e.g., z-score or percentile-based) to reduce inter-patient variability in CTA images.
+    \item \textbf{Augmentation:} Random flips, rotations, intensity shifts, and elastic deformations to increase the robustness of the model and reduce overfitting.
+\end{itemize}
+
+\subsection*{Model Definition}
+Once the data pipeline is established, MONAI allows straightforward definition of deep learning architectures. 
+For example for our UNet model (see Section~\ref{sec:unet_architecture}) we will use the \texttt{monai.networks.nets.UNet}. 
+The parameters of the network such as number of channels can be configured to fit the specific problem of CTA segmentation.
+
+\subsection*{Training and Evaluation}
+For training, MONAI integrates seamlessly with PyTorch, providing essential components for medical image segmentation. 
+This includes:
+\begin{itemize}
+    \item \textbf{Loss Functions:} Medical image segmentation often benefits from combinations of Dice loss and cross-entropy loss, which MONAI provides through \texttt{monai.losses.DiceCELoss}.
+    \item \textbf{Metrics:} MONAI provides medical image–specific evaluation metrics, such as Dice coefficient through \texttt{monai.metrics.DiceMetric} and Hausdorff distance through \texttt{monai.metrics.HausdorffDistanceMetric}, for rigorous performance assessment.
+    \item \textbf{Inference:} MONAI's \texttt{monai.inferers.SlidingWindowInferer} enables efficient inference on large volumetric data by processing overlapping patches.
+\end{itemize}
+During training, the model leverages MONAI's loss functions and metrics while using standard PyTorch training loops for flexibility and control over the training process.
+
 
 \section{UNet Architecture}
 \label{sec:unet_architecture}
 
 % Content to be added about the specific UNet architecture used
 Unet is a type of convolutional neural network (CNN) that is particularly well-suited for image segmentation tasks \cite{ronneberger2015u-net}. It is a fully convolutional network, meaning that it does not use any fully connected layers. Instead, it uses a series of convolutional layers to extract features from the input image, and then uses a series of upsampling layers to reconstruct the output image. The output of the network is a segmentation mask of the same size as the input image.
-The UNet architecture is composed of two main parts: the encoder and the decoder. The encoder is a series of convolutional layers that extract features from the input image. The decoder is a series of upsampling layers that reconstruct the output image. You can think of this architecture like downscaling an Image to see the main components like edges or Forms. Because we are interested in these, we should ignore finer details which are abstracted away during downscaling. skip connections between the encoder and the decoder. The skip connections allow the network to combine low-level and high-level features, which is crucial for capturing fine-grained details in the output mask.
+The UNet architecture is composed of two main parts: the encoder and the decoder. The encoder is a series of convolutional layers that extract features from the input image. The decoder is a series of upsampling layers that reconstruct the output image. You can think of this architecture like downscaling an Image to see the main components like edges or Forms. Because we are interested in these, we should ignore finer details which are abstracted away during downscaling. Connections between the encoder and the decoder are called skip connections. The skip connections allow the network to combine low-level and high-level features, which is crucial for capturing fine-grained details in the output mask.
 
 The UNet architecture is illustrated in Figure~\ref{fig:unet_architecture}.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/unet_structure.png}
+    \caption{Conceptual diagram of the UNet encoder-decoder architecture. The encoder progressively reduces spatial dimensions while extracting higher-level features, while the decoder reconstructs the full-resolution segmentation map. Image adapted from \cite{unet_youtube_2025}.}
+    \label{fig:unet_architecture}
+\end{figure}
 
 \section{Implementation}
 \label{sec:implementation}
 
-The Python libraries MONAI and PyTorch offer a wealth of features that facilitate the implementation of a UNet model. One useful feature is \texttt{monai.transforms}, which provides a range of transformations for data preprocessing.
+The implementation of the UNet model evolved through several iterations, starting with a minimal viable approach and culminating in a robust pipeline. 
 
-To train a UNet model on volumetric data using MONAI, it is essential that all inputs in a batch share the same spatial dimensions. If the spatial dimensions differ, stacking the data into a 5D tensor will fail. Additionally, the image and its corresponding mask must be congruent in shape and distance. Therefore, a preprocessing pipeline is required to:
+\subsection{Initial Approach: Minimal Viable Model}
+\label{subsec:initial_approach}
 
+To start a minimal viable model to establish a baseline and understand the fundamental challenges was implemented. This initial approach used the Binary Cross-Entropy (BCE) loss function and the Dice metric, trained on a single batch for five epochs.
+
+The initial preprocessing pipeline addressed the essential requirements for volumetric data training:
 \begin{enumerate}
-    \item Unify spacings by resampling to a uniform voxel spacing
-    \item Center and crop the data to a common region of interest (ROI)
-    \item Apply padding to ensure a fixed size
+    \item \textbf{Spatial Consistency:} Unifying voxel spacing to ensure all inputs share the same spatial dimensions
+    \item \textbf{ROI Standardization:} Centering and cropping data to a common region of interest
+    \item \textbf{Synchronized Processing:} Applying transformations simultaneously to both image and mask
 \end{enumerate}
 
-Furthermore, it is necessary to apply these transformations synchronously to both the image and the mask.
-
-For example:
-
+Key transformations included:
 \begin{itemize}
-    \item Voxel spacing is unified using the transformation \texttt{Spacingd(keys=["image", "label"], pixdim=[1.0, 1.0, 1.0])}, ensuring that all voxels have the same spacing along each axis (the physical distance between the centers of adjacent voxels)
-    \item The voxel shape must be divisible by a factor $k$. This is enforced by:\\
-        \texttt{DivisiblePadd(keys=["image", "label"], k=16)}
+    \item \texttt{Spacingd(keys=["image", "label"], pixdim=[1.0, 1.0, 1.0])} for uniform voxel spacing
+    \item \texttt{DivisiblePadd(keys=["image", "label"], k=16)} to ensure voxel shapes are divisible by 16
 \end{itemize}
 
-We begin by implementing a minimal viable model that uses the Binary Cross-Entropy (BCE) loss function and the Dice metric. The model is trained on a single batch for five epochs, taking approximately 10 minutes. The results after training are:
-
+The training results after five epochs were:
 \begin{itemize}
     \item Loss: 0.1655
     \item Dice: 0.0000
 \end{itemize}
+
+A Dice score of 0 indicated that the model was not matching the target masks at all, despite the relatively low loss value. This suggested the model was either not detecting relevant features or making entirely incorrect predictions.
 
 \begin{figure}[htbp]
     \centering
@@ -65,16 +110,81 @@ We begin by implementing a minimal viable model that uses the Binary Cross-Entro
     \label{fig:prediction_comparison}
 \end{figure}
 
-A Dice score of 0 implies that the model is not matching the target masks at all, which likely means the model is either not detecting any relevant features or making entirely incorrect predictions. To further investigate, we visualize both the predicted mask and the ground truth mask. As shown in Figure~\ref{fig:prediction_comparison}, the predicted mask does not resemble the ground truth, despite the loss being relatively low. The model seems to be predicting only the background, failing to capture the lesion area.
+As shown in Figure~\ref{fig:prediction_comparison}, the predicted masks did not resemble the ground truth, with the model predicting only background and failing to capture the lesion areas. This failure revealed a fundamental issue with the BCE loss function for this specific problem.
 
-Upon further analysis, we found that the BCE loss function is not well-suited for this problem. This is due to the fact that the positive class (the lesion) is often much smaller than the background. Using BCE encourages the model to focus on the background, leading to:
-
+The BCE loss function proved unsuitable due to severe class imbalance, where the positive class (lesion) occupied only a small portion of the image compared to the background. This imbalance caused:
 \begin{itemize}
-    \item False negatives, where small lesions are barely penalized
-    \item Uneven learning, where the model learns to detect background features rather than the lesion itself
+    \item \textbf{False Negatives:} Small lesions were barely penalized, leading to poor detection
+    \item \textbf{Background Bias:} The model learned to detect background features rather than lesion characteristics
 \end{itemize}
 
-In contrast, the Dice loss function is more appropriate for this task, as it directly maximizes the spatial overlap between the predicted mask and the ground truth, which is crucial when dealing with imbalanced datasets like this.
+With that knowledge the Loss Function had to be changed to the Dice loss function which is more appropriate for this task.
+
+\subsection{Final Implementation: Robust Pipeline}
+\label{subsec:final_implementation}
+
+Building on the lessons learned from the initial approach, the final implementation addresses the identified challenges and incorporates best practices for medical image segmentation. 
+
+\subsubsection{Configuration and Setup}
+\label{subsubsec:configuration}
+
+The implementation uses a centralized configuration approach that allows easy experimentation with different hyperparameters. 
+For the modality, CTA was selected with the window/level settings of 75/40.
+
+\subsubsection{Data Preprocessing and Augmentation}
+\label{subsubsec:preprocessing}
+
+The final preprocessing pipeline was significantly enhanced to improve model robustness and training efficiency. The key transformations in the training pipeline are:
+
+\textbf{Standardization:} As before, \texttt{LoadImaged}, \texttt{EnsureChannelFirstd}, \texttt{Orientationd} (to RAS coordinate system, where R=Right, A=Anterior, S=Superior), and \texttt{Spacingd} (to 1x1x1 mm³ voxels) ensure a consistent starting point for all volumes.
+
+\textbf{Intensity Scaling:} For CTA images, a specific \texttt{ScaleIntensityRanged} transform was applied, using a window of 75 and a level of 40 Hounsfield Units (HU). This focuses the model on the intensity range most relevant for blood vessels, normalizing the input to a [0, 1] range and clipping other values.
+
+\textbf{Foreground Cropping:} \texttt{CropForegroundd} is used to remove large areas of empty background space, allowing the model to focus on relevant anatomy.
+
+\textbf{Smart Sampling:} The most critical addition is \texttt{RandCropByPosNegLabeld}. This transform intelligently creates training patches of size (128, 128, 64) by ensuring a balanced sampling of regions containing the lesion (positive samples) and regions containing only background (negative samples). By setting pos=2 and neg=1, we ensure that for every three patches, two will contain parts of the lesion, which directly combats the class imbalance problem.
+
+\textbf{Data Augmentation:} To prevent overfitting and improve generalization, several random augmentations are applied:
+
+\begin{itemize}
+    \item \texttt{RandFlipd}: Randomly flips the patches along any of the three spatial axes.
+    \item \texttt{RandRotated}: Applies small random rotations to the patches, simulating variations in patient positioning.
+\end{itemize}
+
+The validation pipeline includes the same standardization and scaling steps but omits the random cropping and augmentation to ensure consistent evaluation on the full, unaltered validation volumes.
+
+\subsubsection{Model Architecture and Training Strategy}
+\label{subsubsec:model_training}
+
+. 
+
+\begin{itemize}
+    \item \textbf{Model:} The core architecture is a 3D \texttt{monai.networks.nets.UNet}. It is configured with five encoding levels with channel counts of (32, 64, 128, 256, 512). Crucially, it incorporates residual units and Instance Normalization. Residual connections help mitigate vanishing gradients in deep networks, while instance normalization improves training stability by normalizing feature maps for each sample independently.
+
+    \item \textbf{Loss Function:} The \texttt{DiceCELoss} was chosen, which is a compound loss function combining Dice loss and Cross-Entropy loss. This provides the benefits of Dice loss for handling class imbalance while retaining the smooth gradients and per-voxel penalization of Cross-Entropy, leading to more stable training.
+
+    \item \textbf{Optimizer and Scheduler:} The AdamW optimizer is used, which is an improvement over standard Adam that decouples weight decay from the gradient update. This is paired with a learning rate scheduler that implements a 10-epoch linear warmup followed by a cosine decay. This strategy starts with a small learning rate to avoid early training instability, gradually increases it, and then slowly decreases it, which often helps the model converge to a better minimum.
+
+    \item \textbf{Inference:} During validation, the \texttt{SlidingWindowInferer} solves a practical problem: how to process large medical volumes that are too big to fit in memory all at once. It works by dividing the large volume into smaller, overlapping patches of size (128, 128, 64) that the model can handle. Each patch is processed separately, and then the results are intelligently combined to create a complete segmentation map. This approach gives us the best of both worlds: we can train the model on small, manageable patches (which is more efficient and uses less memory), but still segment entire large volumes during inference. Without this technique, we would be limited to only processing volumes the same size as our training patches.
+\end{itemize}
+
+\subsubsection{Post-processing}
+\label{subsubsec:postprocessing}
+
+A crucial step in the final pipeline is the post-processing of the model's raw output. Raw predictions from deep learning models often contain small, disconnected regions of "noise" that are clinically irrelevant and can interfere with proper evaluation. The post-processing pipeline refines the binary prediction mask through two main steps:
+
+\begin{itemize}
+    \item \textbf{Removing Small Components:} The system analyzes the predicted mask to identify and count separate regions (lesions). Any predicted region smaller than a specified threshold (600 voxels in our implementation) is automatically removed, as these are typically false detections that don't represent real anatomical structures.
+
+    \item \textbf{Morphological Operations:} Two cleaning operations are applied to improve the mask quality. The first operation removes tiny isolated pixels by temporarily shrinking the mask and then expanding it back - this eliminates small false detections while preserving real lesions. The second operation fills small holes within the predicted lesions by temporarily expanding the mask and then shrinking it back - this smooths the boundaries and makes the lesions appear more complete and anatomically realistic.
+\end{itemize}
+
+This post-processing step significantly improves the final segmentation quality by removing artifacts and noise, making the output more clinically plausible and better aligned with evaluation metrics that consider lesion counts and shapes.
+
+\section{Evaluation Metrics}
+\label{sec:evaluation_metrics}
+
+To comprehensively assess the performance of our UNet model for CTA lesion segmentation, we employ four complementary evaluation metrics that capture different aspects of segmentation quality. These metrics range from voxel-level overlap measurements to object-level detection accuracy, providing a holistic view of the model's capabilities. The following sections (4.4-4.7) describe each metric in detail. Based on the experimental results from UNet\_CTA\_fold0, the model demonstrated promising performance with a Dice coefficient of 0.167, though there remains room for improvement in lesion detection accuracy and boundary precision.
 
 \section{Dice Loss Function}
 \label{sec:dice_loss}
@@ -94,5 +204,55 @@ The Dice loss is derived from the Dice coefficient (also known as F1 score), whi
 \text{Dice} = \frac{2 |X \cap Y|}{|X| + |Y|}
 \end{equation}
 
-where $X$ is the predicted set and $Y$ is the ground truth set. 
+where $X$ is the predicted set and $Y$ is the ground truth set.
+
+\section{Hausdorff Distance (95th Percentile)}
+\label{sec:hausdorff_distance}
+
+While the Dice coefficient measures volumetric overlap, the Hausdorff Distance (HD) evaluates the boundary similarity between the predicted segmentation (X) and the ground truth (Y). It is a measure of how far two subsets of a metric space are from each other. Conceptually, it represents the greatest of all the distances from a point in one set to the closest point in the other set.
+
+The standard Hausdorff Distance is defined as:
+\begin{equation}
+H(X, Y) = \max \left( \sup_{x \in X} \inf_{y \in Y} d(x, y), \sup_{y \in Y} \inf_{x \in X} d(x, y) \right)
+\end{equation}
+where d(x,y) is the Euclidean distance between points x and y.
+
+A major drawback of this formulation is its sensitivity to outliers. A single misclassified voxel far from the ground truth can dramatically increase the HD value. To address this, the 95th percentile Hausdorff Distance (HD95) is commonly used. Instead of the maximum distance (sup), it computes the 95th percentile of the distances, making the metric more robust to small segmentation errors and outliers. A lower HD95 value indicates a better alignment of the predicted and ground truth boundaries.
+
+\section{Absolute Lesion Count Difference}
+\label{sec:lesion_count_difference}
+
+The Absolute Lesion Count Difference (ALCD) is an object-level metric that assesses whether the model predicts the correct number of distinct lesions. It is calculated by:
+
+Performing 3D connected component analysis on both the predicted mask and the ground truth mask to identify and count the number of separate objects (lesions).
+
+Calculating the absolute difference between these two counts:
+\begin{equation}
+\text{ALCD} = | \text{Count}_{\text{predicted}} - \text{Count}_{\text{ground\_truth}} |
+\end{equation}
+
+This metric is clinically relevant as it penalizes models that incorrectly merge distinct lesions into one or split a single large lesion into multiple smaller ones. A lower ALCD score is better, with a score of 0 indicating a perfect match in the number of detected lesions.
+
+\section{Lesion F1 Score}
+\label{sec:lesion_f1_score}
+
+The Lesion F1 Score is another object-level metric that evaluates the model's ability to detect individual lesions correctly, moving beyond simple voxel-wise comparison. It is calculated based on the concepts of True Positives (TP), False Positives (FP), and False Negatives (FN) at the lesion level:
+
+True Positive (TP): A predicted lesion that overlaps with a ground truth lesion.
+
+False Positive (FP): A predicted lesion that does not overlap with any ground truth lesion.
+
+False Negative (FN): A ground truth lesion that is not overlapped by any predicted lesion.
+
+From these counts, Precision and Recall are calculated:
+\begin{equation}
+\text{Precision} = \frac{\text{TP}}{\text{TP} + \text{FP}}, \quad \text{Recall} = \frac{\text{TP}}{\text{TP} + \text{FN}}
+\end{equation}
+
+The Lesion F1 score is the harmonic mean of this lesion-level Precision and Recall:
+\begin{equation}
+\text{Lesion F1} = 2 \cdot \frac{\text{Precision} \cdot \text{Recall}}{\text{Precision} + \text{Recall}} = \frac{2 \cdot \text{TP}}{2 \cdot \text{TP} + \text{FP} + \text{FN}}
+\end{equation}
+
+This metric provides a balanced assessment of detection accuracy, penalizing both missed lesions and spurious detections. A score of 1 indicates perfect detection, while a score of 0 indicates no correct detections. 
 
