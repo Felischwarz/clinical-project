@@ -7,3 +7,17 @@ sub makeglossaries {
   popd;
   return $return;
 }
+
+# Use Biber for biblatex
+$bibtex_use = 2;
+$biber = '/Library/TeX/texbin/biber';
+
+# Force biber instead of bibtex and respect build dir
+$bibtex = '/Library/TeX/texbin/biber %O %B';
+
+# Configure output and aux directories for all tools
+$out_dir = 'build';
+$aux_dir = 'build';
+
+# Use explicit pdflatex path (let latexmk manage -outdir)
+$pdflatex = '/Library/TeX/texbin/pdflatex %O -synctex=1 -interaction=nonstopmode -recorder %S';
