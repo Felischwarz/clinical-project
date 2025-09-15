@@ -12,14 +12,14 @@ In this project, we employ this structure to implement a UNet model using CTA im
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.9\textwidth]{figures/Monai_overview.png}
-    \caption{Overview of the typical MONAI pipeline for deep learning in medical imaging. The workflow illustrates the complete process from data input (NIFTI files) to the final model. Adapted from \cite{monai2020highlights}.}
+    \caption{Overview of the typical MONAI pipeline for deep learning in medical imaging. The workflow illustrates the complete process from data input (NIFTI files) to the final model. Adapted from \cite{monai2020overview}.}
     \label{fig:monai_overview}
 \end{figure}
 
 
 \subsection*{Data Preprocessing and Loading}
 The preprocessing stage ensures that raw CTA scans are transformed into a format suitable for model training. 
-For this, MONAI offers a variety of \textit{transforms}, which can be chained together in a \texttt{Compose} object.  \cite{learnopencv2023monai}
+For this, MONAI offers a variety of \textit{transforms}, which can be chained together in a \texttt{Compose} object.  \cite{antonelli2022medical}
 Key steps in our preprocessing include:
 \begin{itemize}
     \item \textbf{Loading and Conversion:} Using \texttt{LoadImaged} to read NIfTI files and \texttt{EnsureChannelFirstd} to standardize the data layout.
@@ -48,7 +48,7 @@ During training, the model leverages MONAI's loss functions and metrics while us
 \label{sec:unet_architecture}
 
 % Content to be added about the specific UNet architecture used
-Unet is a type of convolutional neural network (CNN) that is particularly well-suited for image segmentation tasks \cite{ronneberger2015u-net}. It is a fully convolutional network, meaning that it does not use any fully connected layers. Instead, it uses a series of convolutional layers to extract features from the input image, and then uses a series of upsampling layers to reconstruct the output image. The output of the network is a segmentation mask of the same size as the input image.
+Unet is a type of convolutional neural network (CNN) that is particularly well-suited for image segmentation tasks \cite{ronneberger2015unet}. It is a fully convolutional network, meaning that it does not use any fully connected layers. Instead, it uses a series of convolutional layers to extract features from the input image, and then uses a series of upsampling layers to reconstruct the output image. The output of the network is a segmentation mask of the same size as the input image.
 The UNet architecture is composed of two main parts: the encoder and the decoder. The encoder is a series of convolutional layers that extract features from the input image. The decoder is a series of upsampling layers that reconstruct the output image. You can think of this architecture like downscaling an Image to see the main components like edges or Forms. Because we are interested in these, we should ignore finer details which are abstracted away during downscaling. Connections between the encoder and the decoder are called skip connections. The skip connections allow the network to combine low-level and high-level features, which is crucial for capturing fine-grained details in the output mask.
 
 The UNet architecture is illustrated in Figure~\ref{fig:unet_architecture}.
@@ -56,7 +56,7 @@ The UNet architecture is illustrated in Figure~\ref{fig:unet_architecture}.
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.8\textwidth]{figures/unet_structure.png}
-    \caption{Conceptual diagram of the UNet encoder-decoder architecture. The encoder progressively reduces spatial dimensions while extracting higher-level features, while the decoder reconstructs the full-resolution segmentation map. Image adapted from \cite{unet_youtube_2025}.}
+    \caption{Conceptual diagram of the UNet encoder-decoder architecture. The encoder progressively reduces spatial dimensions while extracting higher-level features, while the decoder reconstructs the full-resolution segmentation map. Image adapted from \cite{rupert2023unet}.}
     \label{fig:unet_architecture}
 \end{figure}
 
@@ -189,13 +189,13 @@ To comprehensively assess the performance of our UNet model for CTA lesion segme
 \section{Dice Loss Function}
 \label{sec:dice_loss}
 
-The Dice loss function is commonly used in medical image segmentation tasks due to its effectiveness in handling class imbalance, which is typical in medical imaging where the region of interest (e.g., lesions) often occupies only a small portion of the image.
+The Dice loss function, which was popularized for training deep neural networks on volumetric medical data by Milletari et al. \cite{milletari2016vnet}, is commonly used in medical image segmentation tasks due to its effectiveness in handling class imbalance, which is typical in medical imaging where the region of interest (e.g., lesions) often occupies only a small portion of the image. 
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.7\textwidth]{figures/dice_loss_illustration.png}
-    \caption{Visual explanation of the Dice coefficient calculation. The Dice coefficient is computed as the ratio of twice the area of overlap (green) to the total area of both the predicted segmentation and ground truth. Image adapted from \cite{nevilledice2023}.}
-    \label{fig:dice_illustration}
+    \caption{Visual explanation of the Dice coefficient calculation. The Dice coefficient is computed as the ratio of twice the area of overlap (green) to the total area of both the predicted segmentation and ground truth. Image adapted from \cite{neville2023dice}.}
+    \label{fig:dice_illustration} 
 \end{figure}
 
 The Dice loss is derived from the Dice coefficient (also known as F1 score), which measures the overlap between the predicted segmentation and the ground truth. The Dice coefficient is defined as:

@@ -1,0 +1,34 @@
+\chapter{Discussion and Conclusion}
+\label{chap:discussion_conclusion}
+
+\section{Discussion}
+\label{sec:discussion}
+
+The primary objective of this project was to bridge the diagnostic gap between acute CT imaging and follow-up MRI by predicting final lesion masks from CT perfusion data. The results clearly demonstrate the superiority of a multimodal deep learning approach over a unimodal baseline, highlighting the critical role of complementary information in complex medical segmentation tasks.
+
+The unimodal model, trained exclusively on CTA data, failed to produce meaningful segmentations. Its convergence to a trivial local minimum, where it exclusively predicted the background class, can be attributed to two main factors. Firstly, the severe class imbalance, with lesion voxels representing a minuscule fraction of the total volume, makes the optimization landscape challenging for a standard BCE loss function. The model quickly learns that predicting the background is a low-error strategy. Secondly, CTA primarily provides structural information about vascular anatomy. While it can show occlusions, it offers limited direct insight into the functional status of the brain tissue itself. The subtle intensity changes of an evolving infarct in CTA are likely insufficient for the model to learn robust predictive features, especially when confounded by inter-patient variability.
+
+In contrast, the multimodal model, leveraging early fusion of CBF and Tmax maps, demonstrated a stable, albeit noisy, learning progression and achieved significantly better performance across all metrics. This success underscores the value of combining physiologically complementary data streams. The CBF map quantifies the reduction in blood flow (magnitude), directly indicating tissue at risk, while the Tmax map measures the delay in perfusion, a sensitive marker for hypoperfusion and collateral blood flow. By fusing these two maps at the input level, the UNet was able to learn complex, inter-modal features from the very first layer, allowing it to better distinguish the ischemic core from salvageable or healthy tissue. The vast improvement in the 95th percentile Hausdorff Distance (from a collapsed 272.6 mm to 41.1 mm) is particularly telling, as it indicates that the fusion model's predictions align far more closely with the true anatomical boundaries of the lesions.
+
+However, it is important to contextualize the achieved performance. A final Dice coefficient of 0.172 is modest in the broader field of medical image segmentation. This reflects the inherent difficulty of the task: predicting the final infarct volume from acute data is challenging due to the dynamic nature of stroke pathophysiology and the high variability in patient outcomes. The noisy learning curves observed in Figure 5.1 suggest that the training process could be further stabilized, possibly through larger batch sizes, a more extensive dataset, or learning rate schedule adjustments.
+
+Furthermore, this study has several limitations. The dataset, while valuable, is sourced from only two clinical centers, which may limit the model's generalizability to data from different scanners or imaging protocols. The model's architecture, a standard 3D UNet, could also be replaced with more recent, potentially more powerful, architectures. Finally, this work did not incorporate the available clinical \texttt{phenotype} data, which might offer additional predictive power.
+
+\section{Conclusion and Future Work}
+\label{sec:conclusion_future_work}
+
+In conclusion, this project successfully developed a 3D UNet pipeline for the prediction of MRI-based lesion masks from acute CT data. It was demonstrated that a unimodal approach using only CTA data is insufficient for this complex task. In contrast, a multimodal model using early fusion of CBF and Tmax perfusion maps proved to be a far more effective strategy, enabling the model to learn robust features and produce anatomically more plausible segmentations. This work underscores the potential of multimodal deep learning to support clinical decision-making by providing an earlier, more accurate estimation of the final infarct volume.
+
+Building on these findings, several avenues for future work could be explored:
+
+\begin{itemize}
+    \item \textbf{Advanced Fusion Strategies:} While early fusion proved effective, alternative methods like intermediate or late fusion could be investigated. These strategies process modalities in separate streams before combining them at deeper layers or at the decision level, which might offer different advantages.
+
+    \item \textbf{State-of-the-Art Architectures:} The field is rapidly evolving, and exploring more advanced network architectures, such as Transformer-based models (e.g., UNETR or Swin UNETR), could potentially yield significant performance gains.
+
+    \item \textbf{Incorporation of Clinical Data:} The `phenotype` data, including patient demographics and clinical scores, could be integrated into the model. This could be achieved by concatenating these features to the latent space representation within the network to provide additional context for the prediction.
+
+    \item \textbf{Hyperparameter Optimization and Post-Processing:} A systematic hyperparameter search could further optimize the model's performance. Additionally, the post-processing threshold for removing small components (currently 600 voxels) could be fine-tuned based on a statistical analysis of lesion sizes in the training set to improve the Lesion F1 Score.
+\end{itemize}
+
+Pursuing these directions could further enhance the accuracy and robustness of the predictions, moving this approach closer to becoming a valuable tool in the clinical management of acute ischemic stroke.

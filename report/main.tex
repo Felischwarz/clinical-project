@@ -23,8 +23,6 @@
 
 \begin{document}
 
-% Set page numbering to avoid "destination with the same identifier has been already used" warning for cover page.
-% (see https://en.wikibooks.org/wiki/LaTeX/Hyperlinks#Problems_with_Links_and_Pages).
 \pagenumbering{alph}
 \input{pages/cover}
 
@@ -32,7 +30,7 @@
 
 \input{pages/title}
 %\input{pages/disclaimer}
-\input{pages/acknowledgments}
+%\input{pages/acknowledgments}
 \input{pages/abstract}
 \microtypesetup{protrusion=false}
 \tableofcontents{}
@@ -45,12 +43,13 @@
 \input{chapters/03_data_preprocessing}
 \input{chapters/04_unet_model}
 \input{chapters/05_early_fusion_model}
+\input{chapters/06_discussion_conclusion} 
 
 \appendix{}
 
 \microtypesetup{protrusion=false}
 \listoffigures{}
-\listoftables{}
+%\listoftables{}
 \microtypesetup{protrusion=true}
 \printbibliography{}
 

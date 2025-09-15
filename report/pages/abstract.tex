@@ -1,5 +1,8 @@
-\chapter{\abstractname}
-
-%TODO: Abstract
+\chapter*{\abstractname}
+    The rapid and accurate delineation of brain lesions following an ischemic stroke is crucial for treatment decisions. While Computed Tomography (CT) is widely used in the acute phase, Magnetic Resonance Imaging (MRI) provides a more accurate representation of the final infarct volume. This work bridges this diagnostic gap by developing a deep learning model to predict MRI-based lesion masks from acute CT perfusion data.
+    
+    Using the ISLES 2024 dataset \cite{riedel2024isles}, a 3D UNet model was implemented and evaluated. Initially, a unimodal approach trained exclusively on Computed Tomography Angiography (CTA) data was developed as a baseline model. Subsequently, this approach was extended to a multimodal model that combines the complementary information from the Cerebral Blood Flow (CBF) and Time to Maximum (Tmax) perfusion maps using early fusion.
+    
+    The results demonstrate the clear superiority of the multimodal model. While the purely CTA-based model converged to a suboptimal minimum and failed to produce valid results, the fusion model exhibited a stable learning curve and achieved significantly better performance across all evaluation metrics, including the Dice coefficient and Hausdorff distance. This underscores the potential of combining multimodal perfusion data to improve the accuracy and robustness of automated infarct segmentation, thereby supporting clinical decision-making.
 
 
