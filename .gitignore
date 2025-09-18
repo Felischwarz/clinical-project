@@ -54,7 +54,7 @@ hidden_development/
 *.dvi
 *.xdv
 *-converted-to.*
-*.pdf
+
 *.ps
 *.eps
 *.tex.bak
